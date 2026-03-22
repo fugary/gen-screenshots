@@ -1,0 +1,35 @@
+:root {
+  --el-color-primary: #0071e3;
+  --apple-bg: #f5f5f7;
+}
+
+.dark {
+  --apple-bg: #000000;
+  --sidebar-bg: #1c1c1e;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+.app-wrapper {
+  background-color: var(--apple-bg);
+  transition: background-color 0.3s ease;
+}
+
+/* Custom Scrollbar for a premium look */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(128, 128, 128, 0.3);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(128, 128, 128, 0.5);
+}

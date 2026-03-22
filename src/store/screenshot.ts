@@ -1,0 +1,26 @@
+import { defineStore } from 'pinia';
+
+export const useScreenshotStore = defineStore('screenshot', {
+  state: () => ({
+    title: 'New App Store Screenshot',
+    fontSize: 130,
+    textColor: '#ffffff',
+    bgColor1: '#00c6ff',
+    bgColor2: '#0072ff',
+    layout: 'top',
+    frameStyle: 'iphone16-jet',
+    userImage: null as string | null,
+    language: 'zh-CN',
+    theme: 'dark'
+  }),
+  actions: {
+    setProject(data: Partial<any>) {
+      Object.assign(this.$state, data);
+    },
+    resetProject() {
+      this.$state.title = 'New App Store Screenshot';
+      this.$state.userImage = null;
+    }
+  },
+  persist: true
+});
