@@ -340,6 +340,31 @@ const handleBgUpload = (uploadFile: UploadFile) => {
   flex-direction: column;
 }
 
+.section-title {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: #fff;
+  opacity: 0.9;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.sub-label {
+  display: block;
+  font-size: 11px;
+  color: #a1a1aa;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.tab-note {
+  color: #a1a1aa;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
 .slider-item span {
   font-size: 11px;
   color: var(--text-muted);
@@ -347,14 +372,6 @@ const handleBgUpload = (uploadFile: UploadFile) => {
 
 .image-presets {
   margin-bottom: 24px;
-}
-
-.sub-label {
-  display: block;
-  font-size: 11px;
-  color: var(--text-muted);
-  margin-bottom: 8px;
-  text-transform: uppercase;
 }
 
 .img-grid {

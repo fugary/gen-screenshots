@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.1] - 2026-03-22
+
+### Fixed
+- **UI Visibility**: Significantly improved contrast for property panel labels and section titles in dark mode.
+- **Label Clarity**: "Adaptive" switch and "Image Assets" labels are now high-contrast white/gray for better readability.
+
+## [0.4.0] - 2026-03-22
+
 ## [0.3.0] - 2026-03-22
 
 ### Added
