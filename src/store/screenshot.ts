@@ -1,5 +1,25 @@
 import { defineStore } from 'pinia';
 
+export interface ProjectState {
+  id: string;
+  name: string;
+  title: string;
+  subtitle: string;
+  fontSize: number;
+  subtitleFontSize: number;
+  textColor: string;
+  bgColor1: string;
+  bgColor2: string;
+  bgType: 'linear' | 'radial';
+  bgImage: string | null;
+  adaptiveText: boolean;
+  noiseAmount: number;
+  glowColor: string;
+  layout: 'top' | 'bottom';
+  frameStyle: string;
+  userImage: string | null;
+}
+
 export const useScreenshotStore = defineStore('screenshot', {
   state: () => ({
     title: 'New App Store Screenshot',
@@ -20,15 +40,43 @@ export const useScreenshotStore = defineStore('screenshot', {
     language: 'zh-CN',
     theme: 'dark',
     zoomLevel: 1,
-    currentTab: 'canvas'
+    currentTab: 'canvas',
+    savedProjects: [] as ProjectState[]
   }),
   actions: {
     setProject(data: Partial<any>) {
       Object.assign(this.$state, data);
     },
     resetProject() {
-      this.$state.title = 'New App Store Screenshot';
-      this.$state.userImage = null;
+      this.title = 'New App Store Screenshot';
+      this.subtitle = 'Professional & Elegant Assets';
+      this.userImage = null;
+      this.bgImage = null;
+    },
+    saveProject(name: string) {
+      const id = Date.now().toString();
+      const currentConfig = { ...this.$state } as any;
+      delete currentConfig.savedProjects;
+      delete currentConfig.zoomLevel;
+      delete currentConfig.currentTab;
+      delete currentConfig.language;
+      delete currentConfig.theme;
+      
+      this.savedProjects.push({
+        id,
+        name,
+        ...currentConfig
+      });
+    },
+    loadProject(id: string) {
+      const project = this.savedProjects.find(p => p.id === id);
+      if (project) {
+        const { id: _, name: __, ...data } = project;
+        Object.assign(this.$state, data);
+      }
+    },
+    deleteProject(id: string) {
+      this.savedProjects = this.savedProjects.filter(p => p.id !== id);
     }
   },
   persist: true

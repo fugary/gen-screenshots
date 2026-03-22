@@ -1,13 +1,10 @@
 <template>
-  <div
-    ref="containerRef"
-    class="canvas-container"
-  >
-    <canvas
-      ref="canvasRef"
-      :width="canvasWidth"
+  <div class="canvas-container" ref="containerRef">
+    <canvas 
+      ref="canvasRef" 
+      :width="canvasWidth" 
       :height="canvasHeight"
-    />
+    ></canvas>
   </div>
 </template>
 
@@ -20,10 +17,22 @@ import { writeFile } from '@tauri-apps/plugin-fs';
 const store = useScreenshotStore();
 const canvasRef = ref<HTMLCanvasElement | null>(null);
 const containerRef = ref<HTMLDivElement | null>(null);
-const ctxRef = ref<CanvasRenderingContext2D | null>(null); // Added ctxRef
+const ctxRef = ref<CanvasRenderingContext2D | null>(null);
 
-const canvasWidth = 1290;
-const canvasHeight = 2796;
+const getCanvasDimensions = () => {
+  switch (store.frameStyle) {
+    case 'iphone16-promax': return { width: 1320, height: 2868 }; // 6.9"
+    case 'iphone-6.7': return { width: 1290, height: 2796 }; // 6.7"
+    case 'iphone-6.5': return { width: 1242, height: 2688 }; // 6.5"
+    case 'iphone-5.5': return { width: 1242, height: 2208 }; // 5.5"
+    case 'ipad-13': return { width: 2048, height: 2732 };    // iPad Pro 12.9"/13"
+    case 'ipad-11': return { width: 1668, height: 2388 };    // iPad Pro 11"
+    default: return { width: 1290, height: 2796 };
+  }
+};
+
+const canvasWidth = ref(1290);
+const canvasHeight = ref(2796);
 
 const getLuminance = (hex: string) => {
   const rgb = parseInt(hex.slice(1), 16);
@@ -35,18 +44,26 @@ const getLuminance = (hex: string) => {
 
 const draw = () => {
   const canvas = canvasRef.value;
+  if (!canvas) return;
+  
+  if (!ctxRef.value) {
+    ctxRef.value = canvas.getContext('2d');
+  }
   const ctx = ctxRef.value;
-  if (!canvas || !ctx) return;
+  if (!ctx) return;
 
-  // 1. Background
+  const dims = getCanvasDimensions();
+  canvasWidth.value = dims.width;
+  canvasHeight.value = dims.height;
+
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   
-  // Background Image
   if (store.bgImage) {
     const bgImg = new Image();
+    bgImg.crossOrigin = "anonymous";
     bgImg.onload = () => {
       ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
-      drawLayers(ctx, canvas, true); // Overlay gradient/noise if needed
+      drawLayers(ctx, canvas, true);
     };
     bgImg.src = store.bgImage;
   } else {
@@ -70,7 +87,6 @@ const drawLayers = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, ha
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   }
 
-  // Noise Grain
   if (store.noiseAmount > 0) {
     ctx.save();
     ctx.globalCompositeOperation = 'overlay';
@@ -85,124 +101,176 @@ const drawLayers = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, ha
     ctx.restore();
   }
 
-  // Adaptive Text Color
   let textColor = store.textColor;
   if (store.adaptiveText) {
     const lum = getLuminance(store.bgColor1);
     textColor = lum > 160 ? '#1e293b' : '#ffffff';
   }
 
-  // 2. Text & Layout Calculation
   let frameW = 910;
   let frameH = 1970;
   let borderRadius = 100;
   const isIPad = store.frameStyle.startsWith('ipad');
+  const is55 = store.frameStyle === 'iphone-5.5';
 
   if (isIPad) {
-    frameW = 1400; // Wider iPad
-    frameH = 1850;
+    frameW = 1500;
+    frameH = 2100;
     borderRadius = 60;
+  } else if (store.frameStyle === 'iphone16-promax') {
+    frameW = 980;
+    frameH = 2120;
+    borderRadius = 110;
+  } else if (is55) {
+    frameW = 1000;
+    frameH = 1780;
+    borderRadius = 0;
+  }
+
+  const titleLines = store.title.split('\n');
+  const subLines = store.subtitle.split('\n');
+  const lineHeightTitle = store.fontSize * 1.1;
+  const lineHeightSub = store.subtitleFontSize * 1.1;
+  const titleH = titleLines.length * lineHeightTitle;
+  const subH = subLines.length * lineHeightSub;
+  const gapBetweenTitleSubtitle = 20; // Explicit smaller gap
+  const gapBetweenTextAndDevice = 100; // Slightly tighter
+  const totalContentH = titleH + subH + gapBetweenTitleSubtitle + gapBetweenTextAndDevice + frameH;
+  
+  const startY = (canvas.height - totalContentH) / 2;
+  let textY = startY + (store.fontSize / 2);
+  let deviceY = textY + titleH + subH + gapBetweenTitleSubtitle + gapBetweenTextAndDevice - (store.fontSize / 2);
+
+  if (store.layout === 'bottom') {
+    deviceY = startY;
+    textY = deviceY + frameH + gapBetweenTextAndDevice + (store.fontSize / 2);
   }
 
   ctx.fillStyle = textColor;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  
-  // High-end Text Shadow (Subtle on light bg)
-  ctx.shadowColor = 'rgba(0,0,0,0.2)';
-  ctx.shadowBlur = 15;
-  ctx.shadowOffsetY = 5;
-
-  // Dynamic Positioning
-  let textY = 400;
-  let deviceY = 750;
-  
-  if (store.layout === 'bottom') {
-    textY = 2450;
-    deviceY = 350;
-  }
+  ctx.shadowColor = 'rgba(0,0,0,0.3)';
+  ctx.shadowBlur = 25;
+  ctx.shadowOffsetY = 10;
 
   // Title
   ctx.font = `bold ${store.fontSize}px 'Inter', -apple-system, sans-serif`;
-  const titleLines = store.title.split('\n');
   titleLines.forEach((line, i) => {
-    ctx.fillText(line, canvas.width / 2, textY + (i * store.fontSize * 1.15));
+    ctx.fillText(line, canvas.width / 2, textY + (i * lineHeightTitle));
   });
 
   // Subtitle
-  const subYOffset = titleLines.length * store.fontSize * 1.15;
+  const subStartRow = titleLines.length;
   ctx.font = `500 ${store.subtitleFontSize}px 'Inter', -apple-system, sans-serif`;
-  ctx.globalAlpha = 0.7;
-  const subLines = store.subtitle.split('\n');
+  ctx.globalAlpha = 0.85;
   subLines.forEach((line, i) => {
-    ctx.fillText(line, canvas.width / 2, textY + subYOffset + (i * store.subtitleFontSize * 1.15) + 10);
+    ctx.fillText(line, canvas.width / 2, textY + (subStartRow * lineHeightTitle) + (i * lineHeightSub) + gapBetweenTitleSubtitle);
   });
   ctx.globalAlpha = 1.0;
   ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
 
-  // 3. Image & Frame logic
+  const x = (canvas.width - frameW) / 2;
+  const y = deviceY;
+
+  if (store.frameStyle !== 'none') {
+    ctx.save();
+    ctx.shadowColor = (textColor === '#ffffff') ? store.glowColor : 'rgba(0,0,0,0.15)';
+    ctx.shadowBlur = 180;
+    ctx.shadowOffsetY = 100;
+    ctx.fillStyle = '#000000';
+    if (is55) {
+      ctx.fillRect(x, y, frameW, frameH);
+    } else {
+      roundRect(ctx, x, y, frameW, frameH, borderRadius);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
   if (store.userImage) {
     const img = new Image();
+    img.crossOrigin = "anonymous";
     img.onload = () => {
       ctx.save();
-      
-      let x = (canvas.width - frameW) / 2;
-      let y = deviceY;
-
-      // Realistic Device Glow
-      ctx.shadowColor = (textColor === '#ffffff') ? store.glowColor : 'rgba(0,0,0,0.1)';
-      ctx.shadowBlur = 150;
-      ctx.shadowOffsetY = 80;
-
-      ctx.save();
-      roundRect(ctx, x, y, frameW, frameH, borderRadius);
-      ctx.clip();
+      if (is55) {
+        ctx.beginPath(); ctx.rect(x, y, frameW, frameH); ctx.clip();
+      } else {
+        roundRect(ctx, x, y, frameW, frameH, borderRadius); ctx.clip();
+      }
       ctx.drawImage(img, x, y, frameW, frameH);
       ctx.restore();
-
-      // Device Border
-      if (store.frameStyle !== 'none') {
-        ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
-        
-        const borderThickness = 28;
-        const borderGrad = ctx.createLinearGradient(x, y, x + frameW, y + frameH);
-        let color = '#1c1c1e';
-        if (store.frameStyle === 'iphone16-gold') color = '#d4c5b9';
-        if (store.frameStyle === 'iphone16-silver') color = '#e3e3e8';
-        if (isIPad) color = '#1c1c1e';
-        
-        borderGrad.addColorStop(0, color);
-        borderGrad.addColorStop(0.5, lightenColor(color, 40));
-        borderGrad.addColorStop(1, color);
-
-        ctx.strokeStyle = borderGrad;
-        ctx.lineWidth = borderThickness;
-        roundRect(ctx, x - borderThickness/2, y - borderThickness/2, frameW + borderThickness, frameH + borderThickness, borderRadius + borderThickness/2);
-        ctx.stroke();
-
-        // Screen Bezel
-        ctx.strokeStyle = 'rgba(255,255,255,0.1)';
-        ctx.lineWidth = 2;
-        roundRect(ctx, x - 2, y - 2, frameW + 4, frameH + 4, borderRadius + 2);
-        ctx.stroke();
-
-        if (!isIPad) {
-          // Dynamic Island for iPhone
-          ctx.fillStyle = '#000000';
-          roundRect(ctx, canvas.width/2 - 150, y + 40, 300, 80, 40);
-          ctx.fill();
-        } else {
-          // iPad Detail: Small camera dot
-          ctx.fillStyle = 'rgba(255,255,255,0.1)';
-          ctx.beginPath();
-          ctx.arc(canvas.width / 2, y + 14, 4, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
-      ctx.restore();
+      drawDeviceBorder(ctx, x, y, frameW, frameH, borderRadius, isIPad, is55);
     };
     img.src = store.userImage;
+  } else {
+    ctx.save();
+    ctx.fillStyle = '#111';
+    if (is55) {
+      ctx.fillRect(x, y, frameW, frameH);
+    } else {
+      roundRect(ctx, x, y, frameW, frameH, borderRadius); ctx.fill();
+    }
+    const screenGrad = ctx.createLinearGradient(x, y, x, y + frameH);
+    screenGrad.addColorStop(0, 'rgba(255,255,255,0.06)');
+    screenGrad.addColorStop(0.5, 'rgba(255,255,255,0)');
+    screenGrad.addColorStop(1, 'rgba(255,255,255,0.03)');
+    ctx.fillStyle = screenGrad;
+    if (is55) {
+      ctx.fillRect(x, y, frameW, frameH);
+    } else {
+      roundRect(ctx, x, y, frameW, frameH, borderRadius); ctx.fill();
+    }
+    ctx.restore();
+    drawDeviceBorder(ctx, x, y, frameW, frameH, borderRadius, isIPad, is55);
   }
+};
+
+const drawDeviceBorder = (ctx: CanvasRenderingContext2D, x: number, y: number, frameW: number, frameH: number, borderRadius: number, isIPad: boolean, is55: boolean) => {
+  if (store.frameStyle === 'none') return;
+  
+  ctx.save();
+  const borderThickness = 30;
+  const borderGrad = ctx.createLinearGradient(x, y, x + frameW, y + frameH);
+  let color = '#1c1c1e';
+  if (store.frameStyle.includes('gold')) color = '#d4c5b9';
+  if (store.frameStyle.includes('silver')) color = '#e3e3e8';
+  
+  borderGrad.addColorStop(0, color);
+  borderGrad.addColorStop(0.5, lightenColor(color, 45));
+  borderGrad.addColorStop(1, color);
+
+  ctx.strokeStyle = borderGrad;
+  ctx.lineWidth = borderThickness;
+  if (is55) {
+     ctx.lineWidth = 60;
+     ctx.strokeStyle = '#1c1c1e';
+     ctx.strokeRect(x - 30, y - 180, frameW + 60, frameH + 360);
+     ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+     ctx.lineWidth = 4;
+     ctx.beginPath();
+     ctx.arc(x + frameW/2, y + frameH + 90, 45, 0, Math.PI * 2);
+     ctx.stroke();
+  } else {
+    roundRect(ctx, x - borderThickness/2, y - borderThickness/2, frameW + borderThickness, frameH + borderThickness, borderRadius + borderThickness/2);
+    ctx.stroke();
+
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+    ctx.lineWidth = 2.5;
+    roundRect(ctx, x - 2, y - 2, frameW + 4, frameH + 4, borderRadius + 3);
+    ctx.stroke();
+  }
+
+  if (!isIPad && !is55) {
+    ctx.fillStyle = '#000000';
+    roundRect(ctx, canvasWidth.value/2 - 130, y + 45, 260, 70, 35);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.06)';
+    ctx.beginPath(); ctx.arc(canvasWidth.value/2 + 65, y + 80, 10, 0, Math.PI * 2); ctx.fill();
+  } else if (isIPad) {
+    ctx.fillStyle = 'rgba(255,255,255,0.12)';
+    ctx.beginPath(); ctx.arc(canvasWidth.value / 2, y + 16, 5, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
 };
 
 const lightenColor = (col: string, amt: number) => {
@@ -221,7 +289,7 @@ const lightenColor = (col: string, amt: number) => {
   let g = (num & 0x0000ff) + amt;
   if (g > 255) g = 255;
   else if (g < 0) g = 0;
-  return (usePound ? '#' : '') + (g | (b << 8) | (r << 16)).toString(16);
+  return (usePound ? '#' : '') + (g | (b << 8) | (r << 16)).toString(16).padStart(6, '0');
 };
 
 const handleExport = async () => {
@@ -235,12 +303,7 @@ const handleExport = async () => {
 
     if ((window as any).__TAURI_INTERNALS__) {
       const path = await save({
-        filters: [
-          {
-            name: 'PNG Image',
-            extensions: ['png']
-          }
-        ],
+        filters: [{ name: 'PNG Image', extensions: ['png'] }],
         defaultPath: 'screenshot.png'
       });
 
@@ -248,7 +311,6 @@ const handleExport = async () => {
         await writeFile(path, binaryData);
       }
     } else {
-      // Browser Fallback
       const link = document.createElement('a');
       link.download = `screenshot-${Date.now()}.png`;
       link.href = dataUrl;
@@ -259,14 +321,7 @@ const handleExport = async () => {
   }
 };
 
-function roundRect(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-  radius: number
-) {
+function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number) {
   ctx.beginPath();
   ctx.moveTo(x + radius, y);
   ctx.lineTo(x + width - radius, y);
@@ -281,7 +336,7 @@ function roundRect(
 }
 
 onMounted(() => {
-  draw();
+  setTimeout(draw, 100);
   window.addEventListener('export-canvas', handleExport);
 });
 

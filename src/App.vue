@@ -94,6 +94,20 @@
                   <el-icon><Plus /></el-icon>
                 </el-button>
               </el-button-group>
+              <div class="language-switcher">
+                <el-radio-group
+                  v-model="store.language"
+                  size="small"
+                  class="custom-radio"
+                >
+                  <el-radio-button label="zh-CN">
+                    ZH
+                  </el-radio-button>
+                  <el-radio-button label="en-US">
+                    EN
+                  </el-radio-button>
+                </el-radio-group>
+              </div>
               <el-button
                 type="primary"
                 class="export-btn"
@@ -276,14 +290,24 @@ body {
 }
 
 .theme-toggle {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
   cursor: pointer;
-  background: rgba(255,255,255,0.05);
+  background: rgba(var(--text-main-rgb), 0.08);
+  color: var(--text-main);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid var(--glass-border);
+}
+
+.theme-toggle:hover {
+  background: var(--accent-color);
+  color: #fff;
+  transform: rotate(45deg);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
 }
 
 /* Content Area */
@@ -308,8 +332,13 @@ body {
 }
 
 .project-name {
-  font-weight: 600;
-  font-size: 16px;
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: -0.5px;
+  background: linear-gradient(135deg, var(--text-main) 0%, var(--accent-color) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
 }
 
 .status-tag {
@@ -319,7 +348,11 @@ body {
 .toolbar-right {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 20px;
+}
+
+.language-switcher {
+  margin-right: 8px;
 }
 
 .preview-workspace {

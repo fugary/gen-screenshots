@@ -149,34 +149,19 @@
           v-model="store.frameStyle"
           class="custom-select"
         >
-          <el-option-group label="iPhone (6.3')">
-            <el-option
-              label="iPhone 16 Pro (Black)"
-              value="iphone16-jet"
-            />
-            <el-option
-              label="iPhone 16 Pro (Gold)"
-              value="iphone16-gold"
-            />
-            <el-option
-              label="iPhone 16 Pro (Silver)"
-              value="iphone16-silver"
-            />
+          <el-option-group label="iPhone (Bezel-less)">
+            <el-option label="iPhone 16 Pro Max (6.9')" value="iphone16-promax" />
+            <el-option label="iPhone 16 / 15 Pro Max (6.7')" value="iphone-6.7" />
+            <el-option label="iPhone 11 Pro Max / XS Max (6.5')" value="iphone-6.5" />
           </el-option-group>
-          <el-option-group label="iPad (11' / 13')">
-            <el-option
-              label="iPad Pro 11'"
-              value="ipad-11"
-            />
-            <el-option
-              label="iPad Pro 13'"
-              value="ipad-13"
-            />
+          <el-option-group label="iPhone (Classic)">
+            <el-option label="iPhone 8 Plus / 7 Plus (5.5')" value="iphone-5.5" />
           </el-option-group>
-          <el-option
-            label="None"
-            value="none"
-          />
+          <el-option-group label="iPad">
+            <el-option label="iPad Pro 13' (12.9')" value="ipad-13" />
+            <el-option label="iPad Pro 11'" value="ipad-11" />
+          </el-option-group>
+          <el-option label="None" value="none" />
         </el-select>
       </div>
 
@@ -198,41 +183,51 @@
         />
       </div>
 
-      <!-- Upload Section -->
-      <div class="panel-section">
+      <!-- Project Persistence Section -->
+      <div class="panel-section project-manager">
         <h3 class="section-title">
-          {{ $t('controls.screenshot') }}
+          {{ $t('controls.projects') }}
         </h3>
-        <el-upload
-          class="screenshot-upload"
-          drag
-          action="#"
-          :auto-upload="false"
-          :on-change="handleFileChange"
-          :show-file-list="false"
-        >
-          <div
-            v-if="!store.userImage"
-            class="upload-placeholder"
+        <div class="project-save">
+          <el-input
+            v-model="newProjectName"
+            placeholder="Project name..."
+            size="small"
           >
-            <el-icon class="upload-icon">
-              <UploadFilled />
-            </el-icon>
-            <p>Drop or click to upload</p>
-          </div>
+            <template #append>
+              <el-button @click="handleSaveProject">
+                Save
+              </el-button>
+            </template>
+          </el-input>
+        </div>
+        <div class="project-list" v-if="store.savedProjects.length">
           <div
-            v-else
-            class="upload-preview"
+            v-for="p in store.savedProjects"
+            :key="p.id"
+            class="project-item-row"
           >
-            <img
-              :src="store.userImage"
-              alt="Preview"
-            >
-            <div class="overlay">
-              <el-icon><Refresh /></el-icon>
+            <span class="p-name">{{ p.name }}</span>
+            <div class="p-actions">
+              <el-button
+                circle
+                size="small"
+                type="primary"
+                @click="store.loadProject(p.id)"
+              >
+                <el-icon><Refresh /></el-icon>
+              </el-button>
+              <el-button
+                circle
+                size="small"
+                type="danger"
+                @click="store.deleteProject(p.id)"
+              >
+                <el-icon><Delete /></el-icon>
+              </el-button>
             </div>
           </div>
-        </el-upload>
+        </div>
       </div>
     </div>
 
@@ -271,15 +266,17 @@
 
 <script setup lang="ts">
 import { useScreenshotStore } from '../store/screenshot';
-import { UploadFile } from 'element-plus';
-import { UploadFilled, Refresh } from '@element-plus/icons-vue';
+import { UploadFile, ElMessage } from 'element-plus';
+import { UploadFilled, Refresh, Delete, Plus } from '@element-plus/icons-vue';
 
 const store = useScreenshotStore();
 
+const newProjectName = ref('');
+
 const bgImages = [
-  { name: 'Abstract 1', url: '/Users/gary/.gemini/antigravity/brain/1a2f01da-fe5c-4482-b2ab-ebb539f3846f/abstract_gradient_bg_1_1774167635049.png' },
-  { name: 'Sunset', url: '/Users/gary/.gemini/antigravity/brain/1a2f01da-fe5c-4482-b2ab-ebb539f3846f/abstract_gradient_bg_2_1774167650835.png' },
-  { name: 'Emerald', url: '/Users/gary/.gemini/antigravity/brain/1a2f01da-fe5c-4482-b2ab-ebb539f3846f/abstract_gradient_bg_3_1774167668265.png' },
+  { name: 'Aurora', url: '/presets/bg4.png' },
+  { name: 'Sand', url: '/presets/bg5.png' },
+  { name: 'Glass', url: '/presets/bg6.png' },
 ];
 
 const presets = [
@@ -315,11 +312,56 @@ const handleBgUpload = (uploadFile: UploadFile) => {
     reader.readAsDataURL(file);
   }
 };
+const handleSaveProject = () => {
+  if (newProjectName.value.trim()) {
+    store.saveProject(newProjectName.value.trim());
+    newProjectName.value = '';
+    ElMessage.success('Project saved!');
+  }
+};
 </script>
 
 <style scoped>
 .control-panel {
   height: calc(100vh - 48px);
+}
+
+.project-manager {
+  border-top: 1px solid var(--glass-border);
+  margin-top: 20px;
+  padding-top: 20px;
+}
+
+.project-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.project-item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255,255,255,0.03);
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--glass-border);
+}
+
+.p-name {
+  font-size: 13px;
+  color: var(--text-main);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
+}
+
+.p-actions {
+  display: flex;
+  gap: 4px;
 }
 
 .text-inputs {

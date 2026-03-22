@@ -15,6 +15,7 @@ const messages = {
       effects: 'Visual Effects',
       noise: 'Noise Intensity',
       screenshot: 'Screenshot',
+      projects: 'Saved Projects',
       export: 'Export PNG'
     }
   },
@@ -25,13 +26,14 @@ const messages = {
     },
     controls: {
       headline: '主标题',
-      background: '背景背景',
+      background: '背景设置',
       fontSize: '字体大小',
       layout: '布局方式',
       device: '设备机型',
       effects: '视觉特效',
       noise: '噪点强度',
       screenshot: '屏幕截图',
+      projects: '项目存档',
       export: '导出图片'
     }
   }
