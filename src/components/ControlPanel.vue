@@ -277,6 +277,9 @@ const bgImages = [
   { name: 'Aurora', url: '/presets/bg4.png' },
   { name: 'Sand', url: '/presets/bg5.png' },
   { name: 'Glass', url: '/presets/bg6.png' },
+  { name: 'Midnight', url: '/presets/bg1.png' },
+  { name: 'Soft Rose', url: '/presets/bg2.png' },
+  { name: 'Ice Tech', url: '/presets/bg3.png' },
 ];
 
 const presets = [
