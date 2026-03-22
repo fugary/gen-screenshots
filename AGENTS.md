@@ -40,6 +40,7 @@ Store should handle:
 - **Aesthetics**: Premium, Glassmorphism, Vibrant Gradients.
 - **Responsive**: Sidebar width is fixed (380px), Canvas area is liquid.
 - **Icons**: Use `@element-plus/icons-vue`.
+- **Accessibility**: Always ensure text contrast on dark/light backgrounds (auto-adapter) to prevent invisible labels.
 
 ## 8. Development Commands
 - `npm run dev`: Start web dev server.

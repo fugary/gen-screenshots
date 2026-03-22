@@ -45,9 +45,16 @@
 
       <!-- Background Section -->
       <div class="panel-section">
-        <h3 class="section-title">
-          {{ $t('controls.background') }}
-        </h3>
+        <div class="section-header">
+          <h3 class="section-title">
+            {{ $t('controls.background') }}
+          </h3>
+          <el-switch
+            v-model="store.adaptiveText"
+            size="small"
+            active-text="Adaptive"
+          />
+        </div>
         <div class="bg-settings">
           <div class="presets-grid">
             <div
@@ -58,6 +65,37 @@
               @click="applyPreset(p.c1, p.c2)"
             />
           </div>
+          
+          <div class="image-presets">
+            <span class="sub-label">Image Assets</span>
+            <div class="img-grid">
+              <div
+                v-for="img in bgImages"
+                :key="img.name" 
+                class="img-item" 
+                :style="{ backgroundImage: `url(${img.url})` }"
+                @click="store.setProject({ bgImage: img.url })"
+              />
+              <el-upload
+                action="#"
+                :auto-upload="false"
+                :on-change="handleBgUpload"
+                :show-file-list="false"
+                class="bg-uploader"
+              >
+                <el-icon><Plus /></el-icon>
+              </el-upload>
+            </div>
+            <el-link
+              v-if="store.bgImage"
+              type="danger"
+              :underline="false"
+              @click="store.setProject({ bgImage: null })"
+            >
+              Clear Image
+            </el-link>
+          </div>
+
           <el-radio-group
             v-model="store.bgType"
             size="small"
@@ -238,6 +276,12 @@ import { UploadFilled, Refresh } from '@element-plus/icons-vue';
 
 const store = useScreenshotStore();
 
+const bgImages = [
+  { name: 'Abstract 1', url: '/Users/gary/.gemini/antigravity/brain/1a2f01da-fe5c-4482-b2ab-ebb539f3846f/abstract_gradient_bg_1_1774167635049.png' },
+  { name: 'Sunset', url: '/Users/gary/.gemini/antigravity/brain/1a2f01da-fe5c-4482-b2ab-ebb539f3846f/abstract_gradient_bg_2_1774167650835.png' },
+  { name: 'Emerald', url: '/Users/gary/.gemini/antigravity/brain/1a2f01da-fe5c-4482-b2ab-ebb539f3846f/abstract_gradient_bg_3_1774167668265.png' },
+];
+
 const presets = [
   { c1: '#6366f1', c2: '#a855f7' }, // Indigo
   { c1: '#0ea5e9', c2: '#22d3ee' }, // Sky
@@ -256,6 +300,17 @@ const handleFileChange = (uploadFile: UploadFile) => {
     const reader = new FileReader();
     reader.onload = (e) => {
       store.setProject({ userImage: e.target?.result as string });
+    };
+    reader.readAsDataURL(file);
+  }
+};
+
+const handleBgUpload = (uploadFile: UploadFile) => {
+  const file = uploadFile.raw;
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      store.setProject({ bgImage: e.target?.result as string });
     };
     reader.readAsDataURL(file);
   }
@@ -290,23 +345,49 @@ const handleFileChange = (uploadFile: UploadFile) => {
   color: var(--text-muted);
 }
 
-.presets-grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 8px;
-  margin-bottom: 16px;
+.image-presets {
+  margin-bottom: 24px;
 }
 
-.preset-item {
-  aspect-ratio: 1;
+.sub-label {
+  display: block;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.img-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.img-item {
+  aspect-ratio: 16/10;
   border-radius: 6px;
+  background-size: cover;
+  background-position: center;
   cursor: pointer;
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid var(--glass-border);
   transition: transform 0.2s;
 }
 
-.preset-item:hover {
-  transform: scale(1.1);
+.img-item:hover {
+  transform: scale(1.05);
+}
+
+.bg-uploader :deep(.el-upload) {
+  width: 100%;
+  aspect-ratio: 16/10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed var(--glass-border);
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-muted);
 }
 
 .section-header {

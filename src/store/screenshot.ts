@@ -10,6 +10,8 @@ export const useScreenshotStore = defineStore('screenshot', {
     bgColor1: '#6366f1',
     bgColor2: '#a855f7',
     bgType: 'radial' as 'linear' | 'radial',
+    bgImage: null as string | null,
+    adaptiveText: true,
     noiseAmount: 0.05,
     glowColor: 'rgba(99, 102, 241, 0.5)',
     layout: 'top',

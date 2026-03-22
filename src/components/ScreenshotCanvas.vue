@@ -20,62 +20,108 @@ import { writeFile } from '@tauri-apps/plugin-fs';
 const store = useScreenshotStore();
 const canvasRef = ref<HTMLCanvasElement | null>(null);
 const containerRef = ref<HTMLDivElement | null>(null);
+const ctxRef = ref<CanvasRenderingContext2D | null>(null); // Added ctxRef
 
 const canvasWidth = 1290;
 const canvasHeight = 2796;
 
+const getLuminance = (hex: string) => {
+  const rgb = parseInt(hex.slice(1), 16);
+  const r = (rgb >> 16) & 0xff;
+  const g = (rgb >>  8) & 0xff;
+  const b = (rgb >>  0) & 0xff;
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+};
+
 const draw = () => {
   const canvas = canvasRef.value;
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return;
-
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const ctx = ctxRef.value;
+  if (!canvas || !ctx) return;
 
   // 1. Background
-  if (store.bgType === 'radial') {
-    const grad = ctx.createRadialGradient(
-      canvas.width / 2, canvas.height / 2, 0,
-      canvas.width / 2, canvas.height / 2, canvas.height
-    );
-    grad.addColorStop(0, store.bgColor1);
-    grad.addColorStop(1, store.bgColor2);
-    ctx.fillStyle = grad;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  // Background Image
+  if (store.bgImage) {
+    const bgImg = new Image();
+    bgImg.onload = () => {
+      ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
+      drawLayers(ctx, canvas, true); // Overlay gradient/noise if needed
+    };
+    bgImg.src = store.bgImage;
   } else {
-    const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
-    grad.addColorStop(0, store.bgColor1);
-    grad.addColorStop(1, store.bgColor2);
-    ctx.fillStyle = grad;
+    drawLayers(ctx, canvas, false);
   }
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+};
 
-  // Noise Texture
+const drawLayers = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, hasBgImg: boolean) => {
+  if (!hasBgImg) {
+    if (store.bgType === 'linear') {
+      const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+      grad.addColorStop(0, store.bgColor1);
+      grad.addColorStop(1, store.bgColor2);
+      ctx.fillStyle = grad;
+    } else {
+      const grad = ctx.createRadialGradient(canvas.width / 2, canvas.height / 2, 0, canvas.width / 2, canvas.height / 2, canvas.width);
+      grad.addColorStop(0, store.bgColor1);
+      grad.addColorStop(1, store.bgColor2);
+      ctx.fillStyle = grad;
+    }
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+
+  // Noise Grain
   if (store.noiseAmount > 0) {
     ctx.save();
-    ctx.globalAlpha = store.noiseAmount;
     ctx.globalCompositeOperation = 'overlay';
-    for (let i = 0; i < 5000; i++) {
-      const x = Math.random() * canvas.width;
-      const y = Math.random() * canvas.height;
-      const size = Math.random() * 2 + 1;
-      ctx.fillStyle = Math.random() > 0.5 ? '#fff' : '#000';
-      ctx.fillRect(x, y, size, size);
+    for (let i = 0; i < canvas.width; i += 4) {
+      for (let j = 0; j < canvas.height; j += 4) {
+        if (Math.random() < store.noiseAmount) {
+          ctx.fillStyle = `rgba(255,255,255,${Math.random() * 0.2})`;
+          ctx.fillRect(i, j, 2, 2);
+        }
+      }
     }
     ctx.restore();
   }
 
-  // 2. Text
-  ctx.fillStyle = store.textColor;
+  // Adaptive Text Color
+  let textColor = store.textColor;
+  if (store.adaptiveText) {
+    const lum = getLuminance(store.bgColor1);
+    textColor = lum > 160 ? '#1e293b' : '#ffffff';
+  }
+
+  // 2. Text & Layout Calculation
+  let frameW = 910;
+  let frameH = 1970;
+  let borderRadius = 100;
+  const isIPad = store.frameStyle.startsWith('ipad');
+
+  if (isIPad) {
+    frameW = 1400; // Wider iPad
+    frameH = 1850;
+    borderRadius = 60;
+  }
+
+  ctx.fillStyle = textColor;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   
-  // High-end Text Shadow
-  ctx.shadowColor = 'rgba(0,0,0,0.3)';
-  ctx.shadowBlur = 20;
-  ctx.shadowOffsetY = 10;
+  // High-end Text Shadow (Subtle on light bg)
+  ctx.shadowColor = 'rgba(0,0,0,0.2)';
+  ctx.shadowBlur = 15;
+  ctx.shadowOffsetY = 5;
 
-  let textY = (store.layout === 'bottom') ? 2450 : 380;
+  // Dynamic Positioning
+  let textY = 400;
+  let deviceY = 750;
   
+  if (store.layout === 'bottom') {
+    textY = 2450;
+    deviceY = 350;
+  }
+
   // Title
   ctx.font = `bold ${store.fontSize}px 'Inter', -apple-system, sans-serif`;
   const titleLines = store.title.split('\n');
@@ -86,10 +132,10 @@ const draw = () => {
   // Subtitle
   const subYOffset = titleLines.length * store.fontSize * 1.15;
   ctx.font = `500 ${store.subtitleFontSize}px 'Inter', -apple-system, sans-serif`;
-  ctx.globalAlpha = 0.8;
+  ctx.globalAlpha = 0.7;
   const subLines = store.subtitle.split('\n');
   subLines.forEach((line, i) => {
-    ctx.fillText(line, canvas.width / 2, textY + subYOffset + (i * store.subtitleFontSize * 1.15) + 20);
+    ctx.fillText(line, canvas.width / 2, textY + subYOffset + (i * store.subtitleFontSize * 1.15) + 10);
   });
   ctx.globalAlpha = 1.0;
   ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
@@ -100,22 +146,11 @@ const draw = () => {
     img.onload = () => {
       ctx.save();
       
-      let frameW = 910;
-      let frameH = 1970;
-      let borderRadius = 100;
-      
-      // iPad Pro Proportions
-      if (store.frameStyle.startsWith('ipad')) {
-        frameW = 1200;
-        frameH = 1650;
-        borderRadius = 60;
-      }
-      
       let x = (canvas.width - frameW) / 2;
-      let y = (store.layout === 'bottom') ? 350 : 680;
+      let y = deviceY;
 
       // Realistic Device Glow
-      ctx.shadowColor = store.glowColor;
+      ctx.shadowColor = (textColor === '#ffffff') ? store.glowColor : 'rgba(0,0,0,0.1)';
       ctx.shadowBlur = 150;
       ctx.shadowOffsetY = 80;
 
@@ -129,12 +164,12 @@ const draw = () => {
       if (store.frameStyle !== 'none') {
         ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
         
-        const borderThickness = 28; // Thinner border
+        const borderThickness = 28;
         const borderGrad = ctx.createLinearGradient(x, y, x + frameW, y + frameH);
         let color = '#1c1c1e';
         if (store.frameStyle === 'iphone16-gold') color = '#d4c5b9';
         if (store.frameStyle === 'iphone16-silver') color = '#e3e3e8';
-        if (store.frameStyle.startsWith('ipad')) color = '#1c1c1e';
+        if (isIPad) color = '#1c1c1e';
         
         borderGrad.addColorStop(0, color);
         borderGrad.addColorStop(0.5, lightenColor(color, 40));
@@ -146,15 +181,21 @@ const draw = () => {
         ctx.stroke();
 
         // Screen Bezel
-        ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+        ctx.strokeStyle = 'rgba(255,255,255,0.1)';
         ctx.lineWidth = 2;
         roundRect(ctx, x - 2, y - 2, frameW + 4, frameH + 4, borderRadius + 2);
         ctx.stroke();
 
-        if (!store.frameStyle.startsWith('ipad')) {
+        if (!isIPad) {
           // Dynamic Island for iPhone
           ctx.fillStyle = '#000000';
           roundRect(ctx, canvas.width/2 - 150, y + 40, 300, 80, 40);
+          ctx.fill();
+        } else {
+          // iPad Detail: Small camera dot
+          ctx.fillStyle = 'rgba(255,255,255,0.1)';
+          ctx.beginPath();
+          ctx.arc(canvas.width / 2, y + 14, 4, 0, Math.PI * 2);
           ctx.fill();
         }
       }
