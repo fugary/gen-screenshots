@@ -24,6 +24,13 @@
               :class="{ active: store.currentTab === 'canvas' }"
               @click="store.setProject({ currentTab: 'canvas' })"
             >
+              <el-icon><CameraFilled /></el-icon>
+            </div>
+            <div 
+              class="nav-item" 
+              :class="{ active: store.currentTab === 'image' }"
+              @click="store.setProject({ currentTab: 'image' })"
+            >
               <el-icon><Picture /></el-icon>
             </div>
             <div 
@@ -202,6 +209,48 @@ body {
   background-color: var(--app-bg);
   color: var(--text-main);
   overflow: hidden;
+}
+
+/* Custom Scrollbar Styles */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(var(--text-main-rgb), 0.1);
+  border-radius: 10px;
+  transition: background 0.2s;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--text-main-rgb), 0.2);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* For el-scrollbar */
+:deep(.el-scrollbar__bar) {
+  opacity: 1 !important;
+}
+
+:deep(.el-scrollbar__thumb) {
+  background-color: rgba(var(--text-main-rgb), 0.1) !important;
+  width: 4px !important;
+}
+
+.dark :deep(.el-scrollbar__thumb) {
+  background-color: rgba(255, 255, 255, 0.1) !important;
 }
 
 .app-wrapper {

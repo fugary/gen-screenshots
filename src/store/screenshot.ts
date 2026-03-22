@@ -1,78 +1,123 @@
 import { defineStore } from 'pinia';
 
-export interface ProjectState {
+export interface Slide {
   id: string;
-  name: string;
   title: string;
   subtitle: string;
-  fontSize: number;
-  subtitleFontSize: number;
-  textColor: string;
+  userImage: string | null;
+  name: string;
+}
+
+export interface ProjectState {
+  slides: Slide[];
+  activeSlideIndex: number;
+  bgType: 'linear' | 'radial';
   bgColor1: string;
   bgColor2: string;
-  bgType: 'linear' | 'radial';
   bgImage: string | null;
-  adaptiveText: boolean;
-  noiseAmount: number;
-  glowColor: string;
-  layout: 'top' | 'bottom';
   frameStyle: string;
-  userImage: string | null;
+  textColor: string;
+  glowColor: string;
+  fontSize: number;
+  subtitleFontSize: number;
+  noiseAmount: number;
+  adaptiveText: boolean;
+  layout: 'top' | 'bottom';
+  zoomLevel: number;
+  language: 'zh-CN' | 'en-US';
+  theme: 'dark' | 'light';
+  currentTab: string;
 }
 
 export const useScreenshotStore = defineStore('screenshot', {
   state: () => ({
-    title: 'New App Store Screenshot',
-    subtitle: 'Professional & Elegant Assets',
-    fontSize: 130,
-    subtitleFontSize: 60,
-    textColor: '#ffffff',
-    bgColor1: '#6366f1',
-    bgColor2: '#a855f7',
-    bgType: 'radial' as 'linear' | 'radial',
+    slides: [
+      { id: '1', title: 'Premium\nScreenshots', subtitle: 'Professional & Elegant Assets', userImage: null as string | null, name: 'Slide 1' }
+    ],
+    activeSlideIndex: 0,
+    bgType: 'linear' as 'linear' | 'radial',
+    bgColor1: '#1e293b',
+    bgColor2: '#0f172a',
     bgImage: null as string | null,
+    frameStyle: 'iphone-6.7',
+    textColor: '#ffffff',
+    glowColor: 'rgba(99, 102, 241, 0.4)',
+    fontSize: 108,
+    subtitleFontSize: 55,
+    noiseAmount: 0.04,
     adaptiveText: true,
-    noiseAmount: 0.05,
-    glowColor: 'rgba(99, 102, 241, 0.5)',
-    layout: 'top',
-    frameStyle: 'iphone16-jet',
-    userImage: null as string | null,
-    language: 'zh-CN',
-    theme: 'dark',
-    zoomLevel: 1,
+    layout: 'top' as 'top' | 'bottom',
+    zoomLevel: 1.0,
+    language: 'zh-CN' as 'zh-CN' | 'en-US',
+    theme: 'dark' as 'dark' | 'light',
     currentTab: 'canvas',
-    savedProjects: [] as ProjectState[]
+    savedProjects: [] as { id: string; name: string; state: any }[]
   }),
+  getters: {
+    activeSlide: (state) => state.slides[state.activeSlideIndex] || state.slides[0],
+    title: (state) => state.slides[state.activeSlideIndex]?.title || '',
+    subtitle: (state) => state.slides[state.activeSlideIndex]?.subtitle || '',
+    userImage: (state) => state.slides[state.activeSlideIndex]?.userImage || null,
+  },
   actions: {
-    setProject(data: Partial<any>) {
-      Object.assign(this.$state, data);
+    setProject(updates: Partial<any>) {
+      Object.assign(this.$state, updates);
     },
-    resetProject() {
-      this.title = 'New App Store Screenshot';
-      this.subtitle = 'Professional & Elegant Assets';
-      this.userImage = null;
-      this.bgImage = null;
+    updateActiveSlide(updates: Partial<Slide>) {
+      const slide = this.slides[this.activeSlideIndex];
+      if (slide) Object.assign(slide, updates);
+    },
+    addSlide() {
+      const newSlide: Slide = {
+        id: Date.now().toString(),
+        title: 'New Headline',
+        subtitle: 'Enter description...',
+        userImage: null,
+        name: `Slide ${this.slides.length + 1}`
+      };
+      this.slides.push(newSlide);
+      this.activeSlideIndex = this.slides.length - 1;
+    },
+    deleteSlide(index: number) {
+      if (this.slides.length <= 1) return;
+      this.slides.splice(index, 1);
+      if (this.activeSlideIndex >= this.slides.length) {
+        this.activeSlideIndex = this.slides.length - 1;
+      }
+    },
+    duplicateSlide(index: number) {
+      const source = this.slides[index];
+      const copy = { ...source, id: Date.now().toString(), name: `${source.name} (Copy)` };
+      this.slides.splice(index + 1, 0, copy);
+      this.activeSlideIndex = index + 1;
     },
     saveProject(name: string) {
-      const id = Date.now().toString();
-      const currentConfig = { ...this.$state } as any;
-      delete currentConfig.savedProjects;
-      delete currentConfig.zoomLevel;
-      delete currentConfig.currentTab;
-      delete currentConfig.language;
-      delete currentConfig.theme;
-      
+      const stateToSave = { ...this.$state };
+      delete (stateToSave as any).savedProjects;
       this.savedProjects.push({
-        id,
+        id: Date.now().toString(),
         name,
-        ...currentConfig
+        state: JSON.parse(JSON.stringify(stateToSave))
       });
     },
     loadProject(id: string) {
-      const project = this.savedProjects.find(p => p.id === id);
-      if (project) {
-        const { id: _, name: __, ...data } = project;
-        Object.assign(this.$state, data);
+      const p = this.savedProjects.find(i => i.id === id);
+      if (p) {
+        const state = JSON.parse(JSON.stringify(p.state));
+        // Backward compatibility migration
+        if (!state.slides) {
+          state.slides = [
+            { 
+              id: '1', 
+              title: state.title || 'Premium\nScreenshots', 
+              subtitle: state.subtitle || 'Professional & Elegant Assets', 
+              userImage: (state.userImage as string | null) || null, 
+              name: 'Imported Slide' 
+            }
+          ];
+          state.activeSlideIndex = 0;
+        }
+        Object.assign(this.$state, state);
       }
     },
     deleteProject(id: string) {

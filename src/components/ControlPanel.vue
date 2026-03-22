@@ -9,13 +9,13 @@
         </h3>
         <div class="text-inputs">
           <el-input
-            v-model="store.title"
+            v-model="store.activeSlide.title"
             type="textarea"
             :rows="2"
             placeholder="Title..."
           />
           <el-input
-            v-model="store.subtitle"
+            v-model="store.activeSlide.subtitle"
             type="textarea"
             :rows="2"
             placeholder="Subtitle..."
@@ -230,6 +230,103 @@
         </div>
       </div>
     </div>
+    
+    <!-- Slides (Image Assets) Tab -->
+    <div
+      v-else-if="store.currentTab === 'image'"
+      class="tab-content"
+    >
+      <div class="panel-header-row">
+        <h3 class="section-title">
+          {{ $t('controls.screenshot') }}
+        </h3>
+        <el-button 
+          type="primary" 
+          size="small" 
+          plain 
+          @click="store.addSlide"
+        >
+          <el-icon class="el-icon--left"><Plus /></el-icon>
+          Add Slide
+        </el-button>
+      </div>
+
+      <div class="slides-list">
+        <div 
+          v-for="(slide, index) in store.slides" 
+          :key="slide.id"
+          class="slide-entry"
+          :class="{ active: store.activeSlideIndex === index }"
+          @click="store.activeSlideIndex = index"
+        >
+          <div class="slide-info">
+            <span class="slide-name">{{ slide.name }}</span>
+            <span class="slide-subtitle-preview">{{ slide.title.slice(0, 20) }}...</span>
+          </div>
+          <div class="slide-controls">
+            <el-button 
+              link 
+              size="small" 
+              @click.stop="store.duplicateSlide(index)"
+            >
+              <el-icon><CopyDocument /></el-icon>
+            </el-button>
+            <el-button 
+              link 
+              size="small" 
+              type="danger" 
+              @click.stop="store.deleteSlide(index)"
+              v-if="store.slides.length > 1"
+            >
+              <el-icon><Delete /></el-icon>
+            </el-button>
+          </div>
+        </div>
+      </div>
+
+      <div class="active-slide-details panel-section">
+        <span class="sub-label">Active Slide Content</span>
+        <el-upload
+          action="#"
+          :auto-upload="false"
+          :on-change="handleUserImageUpload"
+          :show-file-list="false"
+          class="user-image-uploader"
+        >
+          <div v-if="store.activeSlide.userImage" class="image-preview-container">
+            <img :src="store.activeSlide.userImage" class="user-image-preview" />
+            <div class="image-overlay">
+              <el-icon><Edit /></el-icon>
+            </div>
+          </div>
+          <div v-else class="upload-placeholder">
+            <el-icon class="upload-icon"><Plus /></el-icon>
+            <span class="upload-text">Upload Screenshot</span>
+          </div>
+        </el-upload>
+        <div v-if="store.activeSlide.userImage" class="image-actions">
+          <el-button 
+            type="danger" 
+            plain 
+            size="small" 
+            @click="store.updateActiveSlide({ userImage: null })"
+          >
+            Remove Image
+          </el-button>
+        </div>
+      </div>
+
+      <div class="batch-actions panel-section">
+        <el-button 
+          type="success" 
+          class="batch-btn" 
+          @click="handleBatchExport"
+        >
+          <el-icon class="el-icon--left"><Download /></el-icon>
+          Export All Slides ({{ store.slides.length }})
+        </el-button>
+      </div>
+    </div>
 
     <!-- Presets Tab -->
     <div
@@ -267,7 +364,10 @@
 <script setup lang="ts">
 import { useScreenshotStore } from '../store/screenshot';
 import { UploadFile, ElMessage } from 'element-plus';
-import { UploadFilled, Refresh, Delete, Plus } from '@element-plus/icons-vue';
+import { 
+  UploadFilled, Refresh, Delete, Plus, 
+  CopyDocument, Edit, Download 
+} from '@element-plus/icons-vue';
 
 const store = useScreenshotStore();
 
@@ -294,12 +394,12 @@ const applyPreset = (c1: string, c2: string) => {
   store.setProject({ bgColor1: c1, bgColor2: c2 });
 };
 
-const handleFileChange = (uploadFile: UploadFile) => {
+const handleUserImageUpload = (uploadFile: UploadFile) => {
   const file = uploadFile.raw;
   if (file) {
     const reader = new FileReader();
     reader.onload = (e) => {
-      store.setProject({ userImage: e.target?.result as string });
+      store.updateActiveSlide({ userImage: e.target?.result as string });
     };
     reader.readAsDataURL(file);
   }
@@ -321,6 +421,10 @@ const handleSaveProject = () => {
     newProjectName.value = '';
     ElMessage.success('Project saved!');
   }
+};
+
+const handleBatchExport = () => {
+  window.dispatchEvent(new CustomEvent('batch-export-canvas'));
 };
 </script>
 
@@ -564,5 +668,162 @@ const handleSaveProject = () => {
 .effect-item span {
   font-size: 12px;
   color: #94a3b8;
+}
+
+/* Image Assets Tab Styles */
+.user-image-uploader :deep(.el-upload) {
+  width: 100%;
+  display: block;
+  cursor: pointer;
+  border: 1px dashed var(--glass-border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  transition: all 0.2s ease;
+  overflow: hidden;
+}
+
+.user-image-uploader :deep(.el-upload:hover) {
+  border-color: #6366f1;
+  background: rgba(99, 102, 241, 0.05);
+}
+
+.image-preview-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 9/16;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-image-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.image-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+  color: #fff;
+  font-size: 24px;
+}
+
+.image-preview-container:hover .image-overlay {
+  opacity: 1;
+}
+
+.upload-placeholder {
+  padding: 40px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: #64748b;
+}
+
+.upload-icon {
+  font-size: 32px;
+  margin-bottom: 4px;
+}
+
+.upload-text {
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+.image-actions {
+  margin-top: 16px;
+  display: flex;
+  justify-content: center;
+}
+
+/* Slide Manager Styles */
+.panel-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.slides-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.slide-entry {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.slide-entry:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.slide-entry.active {
+  background: rgba(99, 102, 241, 0.1);
+  border-color: var(--el-color-primary);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+}
+
+.slide-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.slide-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.slide-subtitle-preview {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
+}
+
+.slide-controls {
+  display: flex;
+  gap: 4px;
+}
+
+.active-slide-details {
+  border-top: 1px solid var(--glass-border);
+  padding-top: 20px;
+}
+
+.batch-actions {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--glass-border);
+}
+
+.batch-btn {
+  width: 100%;
+  height: 44px;
+  font-weight: 600;
+  border-radius: 12px;
 }
 </style>
