@@ -7,13 +7,20 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
+# Node
+node_modules/
+dist/
+dist-ssr/
+build/Release/
+lib-cov/
+coverage/
+*.lcov
+.nyc_output/
+
 # Tauri
-src-tauri/target
-src-tauri/gen/schemas
-src-tauri/remote
+src-tauri/target/
+src-tauri/gen/schemas/
+src-tauri/remote/
 
 # OS
 .DS_Store
@@ -31,3 +38,8 @@ Thumbs.db
 *.njsproj
 *.sln
 *.sw?
+
+# Vite
+vite.config.ts.timestamp-*
+vite.config.js.timestamp-*
+
