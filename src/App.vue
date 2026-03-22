@@ -131,17 +131,31 @@ const handleExport = () => {
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
+  --app-bg: #f8fafc;
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(0, 0, 0, 0.05);
+  --accent-color: #6366f1;
+  --text-main: #1e293b;
+  --text-main-rgb: 30, 41, 59;
+  --text-muted: #64748b;
+  --workspace-bg: radial-gradient(circle at center, #f1f5f9 0%, #e2e8f0 100%);
+}
+
+.dark {
   --app-bg: #0f172a;
   --glass-bg: rgba(30, 41, 59, 0.7);
   --glass-border: rgba(255, 255, 255, 0.1);
-  --accent-color: #6366f1;
+  --text-main: #f8fafc;
+  --text-main-rgb: 248, 250, 252;
+  --text-muted: #94a3b8;
+  --workspace-bg: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
 }
 
 body {
   margin: 0;
   font-family: 'Inter', -apple-system, sans-serif;
   background-color: var(--app-bg);
-  color: #f8fafc;
+  color: var(--text-main);
   overflow: hidden;
 }
 
@@ -208,12 +222,16 @@ body {
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.2s;
-  color: #94a3b8;
+  color: var(--text-muted);
 }
 
 .nav-item:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--text-main);
+}
+
+.dark .nav-item:hover {
   background: rgba(255, 255, 255, 0.05);
-  color: #fff;
 }
 
 .nav-item.active {
@@ -278,7 +296,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+  background: var(--workspace-bg);
   border-radius: 16px;
   position: relative;
   overflow: hidden;
@@ -289,8 +307,9 @@ body {
   position: absolute;
   width: 100%;
   height: 100%;
-  background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-image: radial-gradient(var(--text-main) 1px, transparent 1px);
   background-size: 32px 32px;
+  opacity: 0.05;
   pointer-events: none;
 }
 

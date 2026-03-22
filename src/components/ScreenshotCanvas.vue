@@ -172,18 +172,26 @@ const handleExport = async () => {
     const base64Data = dataUrl.split(',')[1];
     const binaryData = Uint8Array.from(atob(base64Data), (c) => c.charCodeAt(0));
 
-    const path = await save({
-      filters: [
-        {
-          name: 'PNG Image',
-          extensions: ['png']
-        }
-      ],
-      defaultPath: 'screenshot.png'
-    });
+    if ((window as any).__TAURI_INTERNALS__) {
+      const path = await save({
+        filters: [
+          {
+            name: 'PNG Image',
+            extensions: ['png']
+          }
+        ],
+        defaultPath: 'screenshot.png'
+      });
 
-    if (path) {
-      await writeFile(path, binaryData);
+      if (path) {
+        await writeFile(path, binaryData);
+      }
+    } else {
+      // Browser Fallback
+      const link = document.createElement('a');
+      link.download = `screenshot-${Date.now()}.png`;
+      link.href = dataUrl;
+      link.click();
     }
   } catch (err) {
     console.error('Export failed:', err);

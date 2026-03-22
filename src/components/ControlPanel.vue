@@ -23,10 +23,10 @@
           size="small"
           class="custom-radio"
         >
-          <el-radio-button label="linear">
+          <el-radio-button :value="'linear'">
             Linear
           </el-radio-button>
-          <el-radio-button label="radial">
+          <el-radio-button :value="'radial'">
             Radial
           </el-radio-button>
         </el-radio-group>
@@ -68,10 +68,10 @@
         size="small"
         class="custom-radio"
       >
-        <el-radio-button label="top">
+        <el-radio-button :value="'top'">
           Top
         </el-radio-button>
-        <el-radio-button label="bottom">
+        <el-radio-button :value="'bottom'">
           Bottom
         </el-radio-button>
       </el-radio-group>
@@ -191,7 +191,7 @@ const handleFileChange = (uploadFile: UploadFile) => {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #64748b;
+  color: var(--text-muted);
   margin-bottom: 12px;
 }
 
@@ -223,16 +223,16 @@ const handleFileChange = (uploadFile: UploadFile) => {
 
 /* Custom Element Plus Styling overrides */
 :deep(.el-textarea__inner) {
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.08);
-  color: #fff;
+  background: rgba(var(--text-main-rgb), 0.03);
+  border: 1px solid var(--glass-border);
+  color: var(--text-main);
   border-radius: 8px;
 }
 
 :deep(.el-radio-button__inner) {
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.08);
-  color: #94a3b8;
+  background: transparent;
+  border: 1px solid var(--glass-border);
+  color: var(--text-muted);
 }
 
 :deep(.el-radio-button__orig-radio:checked + .el-radio-button__inner) {

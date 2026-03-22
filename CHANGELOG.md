@@ -11,9 +11,11 @@ All notable changes to this project will be documented in this file.
 - **Noise Grain Texture**: Added a professional grain overlay for high-end aesthetics.
 - **Floating Controls**: Improved sidebar and property panel interactions.
 
-### Changed
-- **Default Theme**: Switched to a deep indigo/slate dark-first theme.
-- **Typography**: Integrated 'Inter' as the primary font for both UI and Canvas.
+### Fixed
+- **Export Compatibility**: Added browser fallback for the export button, preventing errors in non-Tauri environments.
+- **Light Theme**: Fully optimized variables and styles for polished light-mode support.
+- **Deprecation Warnings**: Updated Element Plus radio buttons to use `value` instead of `label`.
+- **TypeScript Strictness**: Resolved window property access errors in `ScreenshotCanvas.vue`.
 
 ## [0.1.0] - 2026-03-22
 
