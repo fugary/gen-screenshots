@@ -79,6 +79,19 @@
               >
                 Draft
               </el-tag>
+              
+              <div class="project-title-input">
+                <el-input 
+                  v-model="store.activeSlide.name" 
+                  size="small"
+                  placeholder="Slide name"
+                  class="glass-input"
+                >
+                  <template #prefix>
+                    <el-icon><EditPen /></el-icon>
+                  </template>
+                </el-input>
+              </div>
             </div>
             <div class="toolbar-right">
               <el-button-group class="zoom-controls">
@@ -128,39 +141,40 @@
             </div>
           </el-header>
 
-          <el-main class="preview-workspace">
-            <div
-              class="canvas-viewport"
-              :style="{ transform: `scale(${store.zoomLevel})` }"
-            >
-              <ScreenshotCanvas />
+          <el-main class="main-workspace">
+            <SlideStrip />
+            <div class="canvas-area">
+              <div
+                class="canvas-viewport"
+                :style="{ transform: `scale(${store.zoomLevel})` }"
+              >
+                <ScreenshotCanvas />
+              </div>
+            </div>
+            <div class="right-panel-wrapper">
+              <ControlPanel />
             </div>
           </el-main>
         </el-container>
-
-        <!-- 3. Right Properties Panel -->
-        <el-aside
-          width="320px"
-          class="properties-panel glass"
-        >
-          <ControlPanel />
-        </el-aside>
       </el-container>
     </div>
   </el-config-provider>
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted } from 'vue';
 import { useScreenshotStore } from './store/screenshot';
 import { useI18n } from 'vue-i18n';
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import en from 'element-plus/es/locale/lang/en';
 import { 
   CameraFilled, Picture, Collection, Setting, 
-  Sunny, Moon, Plus, Minus, Download 
+  Sunny, Moon, Plus, Minus, Download,
+  EditPen
 } from '@element-plus/icons-vue';
 import ScreenshotCanvas from './components/ScreenshotCanvas.vue';
 import ControlPanel from './components/ControlPanel.vue';
+import SlideStrip from './components/SlideStrip.vue';
 
 const store = useScreenshotStore();
 useI18n();
@@ -404,38 +418,47 @@ body {
   margin-right: 8px;
 }
 
-.preview-workspace {
-  padding: 0;
+.main-workspace {
+  flex: 1;
   display: flex;
-  justify-content: center;
-  align-items: center;
+  overflow: hidden;
   background: var(--workspace-bg);
   border-radius: 16px;
   position: relative;
-  overflow: hidden;
 }
 
-.canvas-viewport {
-  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  transform-origin: center center;
+.canvas-area {
+  flex: 1;
   display: flex;
   justify-content: center;
   align-items: center;
+  position: relative;
+  overflow: hidden;
+  padding: 40px;
 }
 
-.preview-workspace::before {
+.canvas-area::before {
   content: "";
   position: absolute;
-  width: 100%;
-  height: 100%;
+  inset: 0;
   background-image: radial-gradient(var(--text-main) 1px, transparent 1px);
   background-size: 32px 32px;
   opacity: 0.05;
   pointer-events: none;
 }
 
-/* Properties Panel */
-.properties-panel {
-  padding: 24px;
+.canvas-viewport {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: center center;
+  display: flex;
+}
+
+.right-panel-wrapper {
+  width: 380px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  border-left: 1px solid var(--glass-border);
+  display: flex;
+  flex-direction: column;
 }
 </style>

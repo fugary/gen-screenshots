@@ -2,15 +2,11 @@ import { defineStore } from 'pinia';
 
 export interface Slide {
   id: string;
+  name: string;
   title: string;
   subtitle: string;
   userImage: string | null;
-  name: string;
-}
-
-export interface ProjectState {
-  slides: Slide[];
-  activeSlideIndex: number;
+  // Per-slide settings
   bgType: 'linear' | 'radial';
   bgColor1: string;
   bgColor2: string;
@@ -23,30 +19,43 @@ export interface ProjectState {
   noiseAmount: number;
   adaptiveText: boolean;
   layout: 'top' | 'bottom';
+}
+
+export interface ProjectState {
+  slides: Slide[];
+  activeSlideIndex: number;
   zoomLevel: number;
   language: 'zh-CN' | 'en-US';
   theme: 'dark' | 'light';
   currentTab: string;
 }
 
+const createDefaultSlide = (id: string, name: string): Slide => ({
+  id,
+  name,
+  title: 'Premium\nScreenshots',
+  subtitle: 'Professional & Elegant Assets',
+  userImage: null,
+  bgType: 'linear',
+  bgColor1: '#1e293b',
+  bgColor2: '#0f172a',
+  bgImage: null,
+  frameStyle: 'iphone-6.7',
+  textColor: '#ffffff',
+  glowColor: 'rgba(99, 102, 241, 0.4)',
+  fontSize: 108,
+  subtitleFontSize: 55,
+  noiseAmount: 0.04,
+  adaptiveText: true,
+  layout: 'top'
+});
+
 export const useScreenshotStore = defineStore('screenshot', {
   state: () => ({
     slides: [
-      { id: '1', title: 'Premium\nScreenshots', subtitle: 'Professional & Elegant Assets', userImage: null as string | null, name: 'Slide 1' }
+      createDefaultSlide('1', 'Slide 1')
     ],
     activeSlideIndex: 0,
-    bgType: 'linear' as 'linear' | 'radial',
-    bgColor1: '#1e293b',
-    bgColor2: '#0f172a',
-    bgImage: null as string | null,
-    frameStyle: 'iphone-6.7',
-    textColor: '#ffffff',
-    glowColor: 'rgba(99, 102, 241, 0.4)',
-    fontSize: 108,
-    subtitleFontSize: 55,
-    noiseAmount: 0.04,
-    adaptiveText: true,
-    layout: 'top' as 'top' | 'bottom',
     zoomLevel: 1.0,
     language: 'zh-CN' as 'zh-CN' | 'en-US',
     theme: 'dark' as 'dark' | 'light',
@@ -55,9 +64,22 @@ export const useScreenshotStore = defineStore('screenshot', {
   }),
   getters: {
     activeSlide: (state) => state.slides[state.activeSlideIndex] || state.slides[0],
+    // Map active slide properties to top level for easy access
     title: (state) => state.slides[state.activeSlideIndex]?.title || '',
     subtitle: (state) => state.slides[state.activeSlideIndex]?.subtitle || '',
     userImage: (state) => state.slides[state.activeSlideIndex]?.userImage || null,
+    bgType: (state) => state.slides[state.activeSlideIndex]?.bgType || 'linear',
+    bgColor1: (state) => state.slides[state.activeSlideIndex]?.bgColor1 || '#1e293b',
+    bgColor2: (state) => state.slides[state.activeSlideIndex]?.bgColor2 || '#0f172a',
+    bgImage: (state) => state.slides[state.activeSlideIndex]?.bgImage || null,
+    frameStyle: (state) => state.slides[state.activeSlideIndex]?.frameStyle || 'iphone-6.7',
+    textColor: (state) => state.slides[state.activeSlideIndex]?.textColor || '#ffffff',
+    glowColor: (state) => state.slides[state.activeSlideIndex]?.glowColor || 'rgba(99, 102, 241, 0.4)',
+    fontSize: (state) => state.slides[state.activeSlideIndex]?.fontSize || 108,
+    subtitleFontSize: (state) => state.slides[state.activeSlideIndex]?.subtitleFontSize || 55,
+    noiseAmount: (state) => state.slides[state.activeSlideIndex]?.noiseAmount || 0.04,
+    adaptiveText: (state) => state.slides[state.activeSlideIndex]?.adaptiveText ?? true,
+    layout: (state) => (state.slides[state.activeSlideIndex]?.layout || 'top') as 'top' | 'bottom',
   },
   actions: {
     setProject(updates: Partial<any>) {
@@ -67,14 +89,16 @@ export const useScreenshotStore = defineStore('screenshot', {
       const slide = this.slides[this.activeSlideIndex];
       if (slide) Object.assign(slide, updates);
     },
+    async batchAddSlides(images: string[]) {
+      for (const img of images) {
+        const newSlide = createDefaultSlide(Date.now().toString() + Math.random(), `Slide ${this.slides.length + 1}`);
+        newSlide.userImage = img;
+        this.slides.push(newSlide);
+      }
+      this.activeSlideIndex = this.slides.length - 1;
+    },
     addSlide() {
-      const newSlide: Slide = {
-        id: Date.now().toString(),
-        title: 'New Headline',
-        subtitle: 'Enter description...',
-        userImage: null,
-        name: `Slide ${this.slides.length + 1}`
-      };
+      const newSlide = createDefaultSlide(Date.now().toString(), `Slide ${this.slides.length + 1}`);
       this.slides.push(newSlide);
       this.activeSlideIndex = this.slides.length - 1;
     },
@@ -87,7 +111,9 @@ export const useScreenshotStore = defineStore('screenshot', {
     },
     duplicateSlide(index: number) {
       const source = this.slides[index];
-      const copy = { ...source, id: Date.now().toString(), name: `${source.name} (Copy)` };
+      const copy = JSON.parse(JSON.stringify(source));
+      copy.id = Date.now().toString();
+      copy.name = `${source.name} (Copy)`;
       this.slides.splice(index + 1, 0, copy);
       this.activeSlideIndex = index + 1;
     },
@@ -106,15 +132,25 @@ export const useScreenshotStore = defineStore('screenshot', {
         const state = JSON.parse(JSON.stringify(p.state));
         // Backward compatibility migration
         if (!state.slides) {
-          state.slides = [
-            { 
-              id: '1', 
-              title: state.title || 'Premium\nScreenshots', 
-              subtitle: state.subtitle || 'Professional & Elegant Assets', 
-              userImage: (state.userImage as string | null) || null, 
-              name: 'Imported Slide' 
-            }
-          ];
+          const defaultSlide = createDefaultSlide('1', 'Imported Slide');
+          Object.assign(defaultSlide, {
+            title: state.title,
+            subtitle: state.subtitle,
+            userImage: state.userImage,
+            bgType: state.bgType,
+            bgColor1: state.bgColor1,
+            bgColor2: state.bgColor2,
+            bgImage: state.bgImage,
+            frameStyle: state.frameStyle,
+            textColor: state.textColor,
+            glowColor: state.glowColor,
+            fontSize: state.fontSize,
+            subtitleFontSize: state.subtitleFontSize,
+            noiseAmount: state.noiseAmount,
+            adaptiveText: state.adaptiveText,
+            layout: state.layout
+          });
+          state.slides = [defaultSlide];
           state.activeSlideIndex = 0;
         }
         Object.assign(this.$state, state);

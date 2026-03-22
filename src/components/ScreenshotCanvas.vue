@@ -352,17 +352,13 @@ defineExpose({ draw });
   display: flex;
   justify-content: center;
   align-items: center;
-  background: #111;
-  border-radius: 20px;
-  overflow: hidden;
-  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.5);
-  padding: 20px;
-  height: calc(100vh - 80px);
+  position: relative;
 }
 canvas {
-  height: 100%;
-  width: auto;
-  border-radius: 4px;
-  box-shadow: 0 40px 80px rgba(0, 0, 0, 0.8);
+  height: auto;
+  max-width: 100%;
+  max-height: 85vh;
+  border-radius: 8px;
+  box-shadow: 0 40px 80px rgba(0, 0, 0, 0.6);
 }
 </style>

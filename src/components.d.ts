@@ -34,5 +34,6 @@ declare module 'vue' {
     ElTag: typeof import('element-plus/es')['ElTag']
     ElUpload: typeof import('element-plus/es')['ElUpload']
     ScreenshotCanvas: typeof import('./components/ScreenshotCanvas.vue')['default']
+    SlideStrip: typeof import('./components/SlideStrip.vue')['default']
   }
 }
