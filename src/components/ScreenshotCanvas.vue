@@ -33,39 +33,54 @@ const draw = () => {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   // 1. Background
-  const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-  grad.addColorStop(0, store.bgColor1);
-  grad.addColorStop(1, store.bgColor2);
-  ctx.fillStyle = grad;
+  if (store.bgType === 'radial') {
+    const grad = ctx.createRadialGradient(
+      canvas.width / 2, canvas.height / 2, 0,
+      canvas.width / 2, canvas.height / 2, canvas.height
+    );
+    grad.addColorStop(0, store.bgColor1);
+    grad.addColorStop(1, store.bgColor2);
+    ctx.fillStyle = grad;
+  } else {
+    const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    grad.addColorStop(0, store.bgColor1);
+    grad.addColorStop(1, store.bgColor2);
+    ctx.fillStyle = grad;
+  }
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // Subtle grain / texture for premium feel
-  ctx.save();
-  ctx.globalCompositeOperation = 'overlay';
-  ctx.fillStyle = 'rgba(255,255,255,0.05)';
-  for (let i = 0; i < 1000; i++) {
-    ctx.fillRect(Math.random() * canvas.width, Math.random() * canvas.height, 2, 2);
+  // Noise Texture
+  if (store.noiseAmount > 0) {
+    ctx.save();
+    ctx.globalAlpha = store.noiseAmount;
+    ctx.globalCompositeOperation = 'overlay';
+    for (let i = 0; i < 5000; i++) {
+      const x = Math.random() * canvas.width;
+      const y = Math.random() * canvas.height;
+      const size = Math.random() * 2 + 1;
+      ctx.fillStyle = Math.random() > 0.5 ? '#fff' : '#000';
+      ctx.fillRect(x, y, size, size);
+    }
+    ctx.restore();
   }
-  ctx.restore();
 
   // 2. Text
   ctx.fillStyle = store.textColor;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.font = `bold ${store.fontSize}px -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", sans-serif`;
-
-  // Add subtle shadow to text
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.font = `bold ${store.fontSize}px 'Inter', -apple-system, sans-serif`;
+  
+  // High-end Text Shadow
   ctx.shadowColor = 'rgba(0,0,0,0.3)';
-  ctx.shadowBlur = 10;
-  ctx.shadowOffsetY = 4;
+  ctx.shadowBlur = 20;
+  ctx.shadowOffsetY = 10;
 
   const lines = store.title.split('\n');
-  let textY = store.layout === 'bottom' ? 2450 : 380;
+  let textY = (store.layout === 'bottom') ? 2450 : 380;
   lines.forEach((line, i) => {
-    ctx.fillText(line, canvas.width / 2, textY + i * store.fontSize * 1.15);
+    ctx.fillText(line, canvas.width / 2, textY + (i * store.fontSize * 1.15));
   });
-  ctx.shadowBlur = 0;
-  ctx.shadowOffsetY = 0;
+  ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
 
   // 3. Image & Frame logic
   if (store.userImage) {
@@ -75,12 +90,12 @@ const draw = () => {
       let frameW = 910;
       let frameH = 1970;
       let x = (canvas.width - frameW) / 2;
-      let y = store.layout === 'bottom' ? 350 : 680;
+      let y = (store.layout === 'bottom') ? 350 : 680;
 
-      // Outer Glow/Shadow for the device
-      ctx.shadowColor = 'rgba(0,0,0,0.4)';
-      ctx.shadowBlur = 120;
-      ctx.shadowOffsetY = 60;
+      // Realistic Device Glow
+      ctx.shadowColor = store.glowColor;
+      ctx.shadowBlur = 150;
+      ctx.shadowOffsetY = 80;
 
       ctx.save();
       roundRect(ctx, x, y, frameW, frameH, 100);
@@ -90,17 +105,15 @@ const draw = () => {
 
       // Device Border
       if (store.frameStyle !== 'none') {
-        ctx.shadowBlur = 0;
-        ctx.shadowOffsetY = 0;
-
-        // Premium Border Gradient
+        ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+        
         const borderGrad = ctx.createLinearGradient(x, y, x + frameW, y + frameH);
         let color = '#1c1c1e';
         if (store.frameStyle === 'iphone16-gold') color = '#d4c5b9';
         if (store.frameStyle === 'iphone16-silver') color = '#e3e3e8';
-
+        
         borderGrad.addColorStop(0, color);
-        borderGrad.addColorStop(0.5, lightenColor(color, 20));
+        borderGrad.addColorStop(0.5, lightenColor(color, 40));
         borderGrad.addColorStop(1, color);
 
         ctx.strokeStyle = borderGrad;
@@ -108,21 +121,21 @@ const draw = () => {
         roundRect(ctx, x - 22, y - 22, frameW + 44, frameH + 44, 125);
         ctx.stroke();
 
-        // Inner highlight
-        ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+        // Screen Bezel
+        ctx.strokeStyle = 'rgba(255,255,255,0.15)';
         ctx.lineWidth = 2;
         roundRect(ctx, x - 2, y - 2, frameW + 4, frameH + 4, 102);
         ctx.stroke();
 
         // Dynamic Island
         ctx.fillStyle = '#000000';
-        roundRect(ctx, canvas.width / 2 - 150, y + 40, 300, 80, 40);
+        roundRect(ctx, canvas.width/2 - 150, y + 40, 300, 80, 40);
         ctx.fill();
-
-        // Speaker grille / detail in island
+        
+        // Sensor details
         ctx.fillStyle = 'rgba(255,255,255,0.1)';
         ctx.beginPath();
-        ctx.arc(canvas.width / 2 + 80, y + 80, 10, 0, Math.PI * 2);
+        ctx.arc(canvas.width/2 + 80, y + 80, 10, 0, Math.PI * 2);
         ctx.fill();
       }
       ctx.restore();

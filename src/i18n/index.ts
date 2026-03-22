@@ -12,6 +12,9 @@ const messages = {
       fontSize: 'Font Size',
       layout: 'Layout',
       device: 'Device',
+      effects: 'Visual Effects',
+      noise: 'Noise Intensity',
+      screenshot: 'Screenshot',
       export: 'Export PNG'
     }
   },
@@ -22,10 +25,13 @@ const messages = {
     },
     controls: {
       headline: '主标题',
-      background: '背景颜色',
+      background: '背景背景',
       fontSize: '字体大小',
-      layout: '页面布局',
-      device: '设备模板',
+      layout: '布局方式',
+      device: '设备机型',
+      effects: '视觉特效',
+      noise: '噪点强度',
+      screenshot: '屏幕截图',
       export: '导出图片'
     }
   }

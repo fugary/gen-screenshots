@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.0] - 2026-03-22
+
+### Added
+- **Premium Interface**: Redesigned the entire UI with a three-pane layout (Sidebar, Workspace, Properties).
+- **Glassmorphism**: Integrated real-time blur and translucent panels for a modern desktop feel.
+- **Radial Gradients**: Added support for radial background gradients on the canvas.
+- **Noise Grain Texture**: Added a professional grain overlay for high-end aesthetics.
+- **Floating Controls**: Improved sidebar and property panel interactions.
+
+### Changed
+- **Default Theme**: Switched to a deep indigo/slate dark-first theme.
+- **Typography**: Integrated 'Inter' as the primary font for both UI and Canvas.
+
 ## [0.1.0] - 2026-03-22
 
 ### Added
