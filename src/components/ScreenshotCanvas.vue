@@ -68,18 +68,30 @@ const draw = () => {
   ctx.fillStyle = store.textColor;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.font = `bold ${store.fontSize}px 'Inter', -apple-system, sans-serif`;
   
   // High-end Text Shadow
   ctx.shadowColor = 'rgba(0,0,0,0.3)';
   ctx.shadowBlur = 20;
   ctx.shadowOffsetY = 10;
 
-  const lines = store.title.split('\n');
   let textY = (store.layout === 'bottom') ? 2450 : 380;
-  lines.forEach((line, i) => {
+  
+  // Title
+  ctx.font = `bold ${store.fontSize}px 'Inter', -apple-system, sans-serif`;
+  const titleLines = store.title.split('\n');
+  titleLines.forEach((line, i) => {
     ctx.fillText(line, canvas.width / 2, textY + (i * store.fontSize * 1.15));
   });
+
+  // Subtitle
+  const subYOffset = titleLines.length * store.fontSize * 1.15;
+  ctx.font = `500 ${store.subtitleFontSize}px 'Inter', -apple-system, sans-serif`;
+  ctx.globalAlpha = 0.8;
+  const subLines = store.subtitle.split('\n');
+  subLines.forEach((line, i) => {
+    ctx.fillText(line, canvas.width / 2, textY + subYOffset + (i * store.subtitleFontSize * 1.15) + 20);
+  });
+  ctx.globalAlpha = 1.0;
   ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
 
   // 3. Image & Frame logic
@@ -87,8 +99,18 @@ const draw = () => {
     const img = new Image();
     img.onload = () => {
       ctx.save();
+      
       let frameW = 910;
       let frameH = 1970;
+      let borderRadius = 100;
+      
+      // iPad Pro Proportions
+      if (store.frameStyle.startsWith('ipad')) {
+        frameW = 1200;
+        frameH = 1650;
+        borderRadius = 60;
+      }
+      
       let x = (canvas.width - frameW) / 2;
       let y = (store.layout === 'bottom') ? 350 : 680;
 
@@ -98,7 +120,7 @@ const draw = () => {
       ctx.shadowOffsetY = 80;
 
       ctx.save();
-      roundRect(ctx, x, y, frameW, frameH, 100);
+      roundRect(ctx, x, y, frameW, frameH, borderRadius);
       ctx.clip();
       ctx.drawImage(img, x, y, frameW, frameH);
       ctx.restore();
@@ -107,36 +129,34 @@ const draw = () => {
       if (store.frameStyle !== 'none') {
         ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
         
+        const borderThickness = 28; // Thinner border
         const borderGrad = ctx.createLinearGradient(x, y, x + frameW, y + frameH);
         let color = '#1c1c1e';
         if (store.frameStyle === 'iphone16-gold') color = '#d4c5b9';
         if (store.frameStyle === 'iphone16-silver') color = '#e3e3e8';
+        if (store.frameStyle.startsWith('ipad')) color = '#1c1c1e';
         
         borderGrad.addColorStop(0, color);
         borderGrad.addColorStop(0.5, lightenColor(color, 40));
         borderGrad.addColorStop(1, color);
 
         ctx.strokeStyle = borderGrad;
-        ctx.lineWidth = 44;
-        roundRect(ctx, x - 22, y - 22, frameW + 44, frameH + 44, 125);
+        ctx.lineWidth = borderThickness;
+        roundRect(ctx, x - borderThickness/2, y - borderThickness/2, frameW + borderThickness, frameH + borderThickness, borderRadius + borderThickness/2);
         ctx.stroke();
 
         // Screen Bezel
         ctx.strokeStyle = 'rgba(255,255,255,0.15)';
         ctx.lineWidth = 2;
-        roundRect(ctx, x - 2, y - 2, frameW + 4, frameH + 4, 102);
+        roundRect(ctx, x - 2, y - 2, frameW + 4, frameH + 4, borderRadius + 2);
         ctx.stroke();
 
-        // Dynamic Island
-        ctx.fillStyle = '#000000';
-        roundRect(ctx, canvas.width/2 - 150, y + 40, 300, 80, 40);
-        ctx.fill();
-        
-        // Sensor details
-        ctx.fillStyle = 'rgba(255,255,255,0.1)';
-        ctx.beginPath();
-        ctx.arc(canvas.width/2 + 80, y + 80, 10, 0, Math.PI * 2);
-        ctx.fill();
+        if (!store.frameStyle.startsWith('ipad')) {
+          // Dynamic Island for iPhone
+          ctx.fillStyle = '#000000';
+          roundRect(ctx, canvas.width/2 - 150, y + 40, 300, 80, 40);
+          ctx.fill();
+        }
       }
       ctx.restore();
     };

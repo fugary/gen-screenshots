@@ -1,159 +1,232 @@
 <template>
   <el-scrollbar class="control-panel">
-    <div class="panel-section">
-      <h3 class="section-title">
-        {{ $t('controls.headline') }}
-      </h3>
-      <el-input 
-        v-model="store.title" 
-        type="textarea" 
-        :rows="2" 
-        placeholder="Enter your headline..."
-        class="custom-input"
-      />
-    </div>
+    <!-- Canvas Settings Tab -->
+    <div v-if="store.currentTab === 'canvas'">
+      <!-- Typography Section -->
+      <div class="panel-section">
+        <h3 class="section-title">
+          {{ $t('controls.headline') }}
+        </h3>
+        <div class="text-inputs">
+          <el-input
+            v-model="store.title"
+            type="textarea"
+            :rows="2"
+            placeholder="Title..."
+          />
+          <el-input
+            v-model="store.subtitle"
+            type="textarea"
+            :rows="2"
+            placeholder="Subtitle..."
+          />
+        </div>
+        <div class="font-sliders">
+          <div class="slider-item">
+            <span>Title Size: {{ store.fontSize }}px</span>
+            <el-slider
+              v-model="store.fontSize"
+              :min="80"
+              :max="240"
+              :show-tooltip="false"
+            />
+          </div>
+          <div class="slider-item">
+            <span>Sub Size: {{ store.subtitleFontSize }}px</span>
+            <el-slider
+              v-model="store.subtitleFontSize"
+              :min="30"
+              :max="120"
+              :show-tooltip="false"
+            />
+          </div>
+        </div>
+      </div>
 
-    <div class="panel-section">
-      <h3 class="section-title">
-        {{ $t('controls.background') }}
-      </h3>
-      <div class="bg-settings">
+      <!-- Background Section -->
+      <div class="panel-section">
+        <h3 class="section-title">
+          {{ $t('controls.background') }}
+        </h3>
+        <div class="bg-settings">
+          <div class="presets-grid">
+            <div
+              v-for="p in presets"
+              :key="p.c1" 
+              class="preset-item" 
+              :style="{ background: `linear-gradient(135deg, ${p.c1}, ${p.c2})` }"
+              @click="applyPreset(p.c1, p.c2)"
+            />
+          </div>
+          <el-radio-group
+            v-model="store.bgType"
+            size="small"
+            class="custom-radio"
+          >
+            <el-radio-button :value="'linear'">
+              Linear
+            </el-radio-button>
+            <el-radio-button :value="'radial'">
+              Radial
+            </el-radio-button>
+          </el-radio-group>
+          <div class="color-pickers">
+            <el-color-picker
+              v-model="store.bgColor1"
+              show-alpha
+            />
+            <el-color-picker
+              v-model="store.bgColor2"
+              show-alpha
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Layout Section -->
+      <div class="panel-section">
+        <h3 class="section-title">
+          {{ $t('controls.layout') }}
+        </h3>
         <el-radio-group
-          v-model="store.bgType"
+          v-model="store.layout"
           size="small"
           class="custom-radio"
         >
-          <el-radio-button :value="'linear'">
-            Linear
+          <el-radio-button :value="'top'">
+            Top
           </el-radio-button>
-          <el-radio-button :value="'radial'">
-            Radial
+          <el-radio-button :value="'bottom'">
+            Bottom
           </el-radio-button>
         </el-radio-group>
-        <div class="color-pickers">
-          <el-color-picker
-            v-model="store.bgColor1"
-            show-alpha
-          />
-          <el-color-picker
-            v-model="store.bgColor2"
-            show-alpha
-          />
-        </div>
       </div>
-    </div>
 
-    <div class="panel-section">
-      <div class="section-header">
+      <!-- Device Section -->
+      <div class="panel-section">
         <h3 class="section-title">
-          {{ $t('controls.fontSize') }}
+          {{ $t('controls.device') }}
         </h3>
-        <span class="value-badge">{{ store.fontSize }}px</span>
+        <el-select
+          v-model="store.frameStyle"
+          class="custom-select"
+        >
+          <el-option-group label="iPhone (6.3')">
+            <el-option
+              label="iPhone 16 Pro (Black)"
+              value="iphone16-jet"
+            />
+            <el-option
+              label="iPhone 16 Pro (Gold)"
+              value="iphone16-gold"
+            />
+            <el-option
+              label="iPhone 16 Pro (Silver)"
+              value="iphone16-silver"
+            />
+          </el-option-group>
+          <el-option-group label="iPad (11' / 13')">
+            <el-option
+              label="iPad Pro 11'"
+              value="ipad-11"
+            />
+            <el-option
+              label="iPad Pro 13'"
+              value="ipad-13"
+            />
+          </el-option-group>
+          <el-option
+            label="None"
+            value="none"
+          />
+        </el-select>
       </div>
-      <el-slider
-        v-model="store.fontSize"
-        :min="80"
-        :max="240"
-        :show-tooltip="false"
-        class="custom-slider"
-      />
-    </div>
 
-    <div class="panel-section">
-      <h3 class="section-title">
-        {{ $t('controls.layout') }}
-      </h3>
-      <el-radio-group
-        v-model="store.layout"
-        size="small"
-        class="custom-radio"
-      >
-        <el-radio-button :value="'top'">
-          Top
-        </el-radio-button>
-        <el-radio-button :value="'bottom'">
-          Bottom
-        </el-radio-button>
-      </el-radio-group>
-    </div>
-
-    <div class="panel-section">
-      <h3 class="section-title">
-        {{ $t('controls.device') }}
-      </h3>
-      <el-select
-        v-model="store.frameStyle"
-        class="custom-select"
-      >
-        <el-option
-          label="iPhone 16 Pro (Black)"
-          value="iphone16-jet"
-        />
-        <el-option
-          label="iPhone 16 Pro (Gold)"
-          value="iphone16-gold"
-        />
-        <el-option
-          label="iPhone 16 Pro (Silver)"
-          value="iphone16-silver"
-        />
-        <el-option
-          label="None"
-          value="none"
-        />
-      </el-select>
-    </div>
-
-    <div class="panel-section">
-      <h3 class="section-title">
-        Visual Effects
-      </h3>
-      <div class="effect-item">
-        <span>Noise Intensity</span>
+      <!-- Effects Section -->
+      <div class="panel-section">
+        <h3 class="section-title">
+          {{ $t('controls.effects') }}
+        </h3>
+        <div class="section-header">
+          <span class="value-badge">{{ Math.round(store.noiseAmount * 100) }}%</span>
+        </div>
         <el-slider
           v-model="store.noiseAmount"
           :min="0"
           :max="0.2"
           :step="0.01"
+          :show-tooltip="false"
           class="custom-slider"
         />
       </div>
+
+      <!-- Upload Section -->
+      <div class="panel-section">
+        <h3 class="section-title">
+          {{ $t('controls.screenshot') }}
+        </h3>
+        <el-upload
+          class="screenshot-upload"
+          drag
+          action="#"
+          :auto-upload="false"
+          :on-change="handleFileChange"
+          :show-file-list="false"
+        >
+          <div
+            v-if="!store.userImage"
+            class="upload-placeholder"
+          >
+            <el-icon class="upload-icon">
+              <UploadFilled />
+            </el-icon>
+            <p>Drop or click to upload</p>
+          </div>
+          <div
+            v-else
+            class="upload-preview"
+          >
+            <img
+              :src="store.userImage"
+              alt="Preview"
+            >
+            <div class="overlay">
+              <el-icon><Refresh /></el-icon>
+            </div>
+          </div>
+        </el-upload>
+      </div>
     </div>
 
-    <div class="panel-section">
+    <!-- Presets Tab -->
+    <div
+      v-else-if="store.currentTab === 'presets'"
+      class="tab-content"
+    >
       <h3 class="section-title">
-        Screenshot
+        Design Presets
       </h3>
-      <el-upload
-        class="custom-upload"
-        drag
-        action="#"
-        :auto-upload="false"
-        :on-change="handleFileChange"
-        :show-file-list="false"
-      >
-        <div
-          v-if="!store.userImage"
-          class="upload-placeholder"
-        >
-          <el-icon class="upload-icon">
-            <UploadFilled />
-          </el-icon>
-          <p>Drop or click to upload</p>
-        </div>
-        <div
-          v-else
-          class="upload-preview"
-        >
-          <img
-            :src="store.userImage"
-            alt="Preview"
-          >
-          <div class="overlay">
-            <el-icon><Refresh /></el-icon>
-          </div>
-        </div>
-      </el-upload>
+      <p class="tab-note">
+        Coming soon: Curated design templates for one-click professional styling.
+      </p>
+    </div>
+
+    <!-- Settings Tab -->
+    <div
+      v-else-if="store.currentTab === 'settings'"
+      class="tab-content"
+    >
+      <h3 class="section-title">
+        App Settings
+      </h3>
+      <div class="panel-section">
+        <p class="tab-note">
+          Gen-Screenshots Pro v0.2.0
+        </p>
+        <p class="tab-note">
+          Premium Desktop Edition
+        </p>
+      </div>
     </div>
   </el-scrollbar>
 </template>
@@ -164,6 +237,18 @@ import { UploadFile } from 'element-plus';
 import { UploadFilled, Refresh } from '@element-plus/icons-vue';
 
 const store = useScreenshotStore();
+
+const presets = [
+  { c1: '#6366f1', c2: '#a855f7' }, // Indigo
+  { c1: '#0ea5e9', c2: '#22d3ee' }, // Sky
+  { c1: '#f43f5e', c2: '#fb923c' }, // Sunset
+  { c1: '#10b981', c2: '#34d399' }, // Emerald
+  { c1: '#1e293b', c2: '#0f172a' }, // Midnight
+];
+
+const applyPreset = (c1: string, c2: string) => {
+  store.setProject({ bgColor1: c1, bgColor2: c2 });
+};
 
 const handleFileChange = (uploadFile: UploadFile) => {
   const file = uploadFile.raw;
@@ -182,17 +267,46 @@ const handleFileChange = (uploadFile: UploadFile) => {
   height: calc(100vh - 48px);
 }
 
-.panel-section {
-  margin-bottom: 32px;
+.text-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
 }
 
-.section-title {
-  font-size: 13px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+.font-sliders {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.slider-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.slider-item span {
+  font-size: 11px;
   color: var(--text-muted);
-  margin-bottom: 12px;
+}
+
+.presets-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.preset-item {
+  aspect-ratio: 1;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid rgba(255,255,255,0.1);
+  transition: transform 0.2s;
+}
+
+.preset-item:hover {
+  transform: scale(1.1);
 }
 
 .section-header {

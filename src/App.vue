@@ -19,13 +19,25 @@
             </el-icon>
           </div>
           <div class="nav-items">
-            <div class="nav-item active">
+            <div 
+              class="nav-item" 
+              :class="{ active: store.currentTab === 'canvas' }"
+              @click="store.setProject({ currentTab: 'canvas' })"
+            >
               <el-icon><Picture /></el-icon>
             </div>
-            <div class="nav-item">
+            <div 
+              class="nav-item"
+              :class="{ active: store.currentTab === 'presets' }"
+              @click="store.setProject({ currentTab: 'presets' })"
+            >
               <el-icon><Collection /></el-icon>
             </div>
-            <div class="nav-item">
+            <div 
+              class="nav-item"
+              :class="{ active: store.currentTab === 'settings' }"
+              @click="store.setProject({ currentTab: 'settings' })"
+            >
               <el-icon><Setting /></el-icon>
             </div>
           </div>
@@ -63,13 +75,22 @@
             </div>
             <div class="toolbar-right">
               <el-button-group class="zoom-controls">
-                <el-button size="small">
+                <el-button
+                  size="small"
+                  @click="adjustZoom(-0.1)"
+                >
                   <el-icon><Minus /></el-icon>
                 </el-button>
-                <el-button size="small">
-                  100%
+                <el-button
+                  size="small"
+                  class="zoom-value"
+                >
+                  {{ Math.round(store.zoomLevel * 100) }}%
                 </el-button>
-                <el-button size="small">
+                <el-button
+                  size="small"
+                  @click="adjustZoom(0.1)"
+                >
                   <el-icon><Plus /></el-icon>
                 </el-button>
               </el-button-group>
@@ -87,7 +108,12 @@
           </el-header>
 
           <el-main class="preview-workspace">
-            <ScreenshotCanvas />
+            <div
+              class="canvas-viewport"
+              :style="{ transform: `scale(${store.zoomLevel})` }"
+            >
+              <ScreenshotCanvas />
+            </div>
           </el-main>
         </el-container>
 
@@ -117,6 +143,11 @@ import ControlPanel from './components/ControlPanel.vue';
 
 const store = useScreenshotStore();
 useI18n();
+
+const adjustZoom = (delta: number) => {
+  const newZoom = Math.max(0.2, Math.min(2, store.zoomLevel + delta));
+  store.setProject({ zoomLevel: newZoom });
+};
 
 const toggleTheme = () => {
   store.setProject({ theme: store.theme === 'dark' ? 'light' : 'dark' });
@@ -300,6 +331,14 @@ body {
   border-radius: 16px;
   position: relative;
   overflow: hidden;
+}
+
+.canvas-viewport {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: center center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .preview-workspace::before {

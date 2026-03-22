@@ -3,7 +3,9 @@ import { defineStore } from 'pinia';
 export const useScreenshotStore = defineStore('screenshot', {
   state: () => ({
     title: 'New App Store Screenshot',
+    subtitle: 'Professional & Elegant Assets',
     fontSize: 130,
+    subtitleFontSize: 60,
     textColor: '#ffffff',
     bgColor1: '#6366f1',
     bgColor2: '#a855f7',
@@ -14,7 +16,9 @@ export const useScreenshotStore = defineStore('screenshot', {
     frameStyle: 'iphone16-jet',
     userImage: null as string | null,
     language: 'zh-CN',
-    theme: 'dark'
+    theme: 'dark',
+    zoomLevel: 1,
+    currentTab: 'canvas'
   }),
   actions: {
     setProject(data: Partial<any>) {

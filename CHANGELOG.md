@@ -2,20 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.2.0] - 2026-03-22
+## [0.3.0] - 2026-03-22
 
 ### Added
-- **Premium Interface**: Redesigned the entire UI with a three-pane layout (Sidebar, Workspace, Properties).
-- **Glassmorphism**: Integrated real-time blur and translucent panels for a modern desktop feel.
-- **Radial Gradients**: Added support for radial background gradients on the canvas.
-- **Noise Grain Texture**: Added a professional grain overlay for high-end aesthetics.
-- **Floating Controls**: Improved sidebar and property panel interactions.
+- **Multi-Level Typography**: Added support for subtitles with independent font size control.
+- **iPad Pro Support**: Introduced 11-inch and 13-inch iPad Pro frames with realistic aspect ratios.
+- **Functional Zoom**: Activated header buttons for real-time canvas preview scaling (0.2x to 2x).
+- **Sidebar Navigation**: Implemented tab-based navigation for Canvas, Presets, and Settings.
+- **Quick Presets**: Added a curated background color grid for instant styling.
 
-### Fixed
-- **Export Compatibility**: Added browser fallback for the export button, preventing errors in non-Tauri environments.
-- **Light Theme**: Fully optimized variables and styles for polished light-mode support.
-- **Deprecation Warnings**: Updated Element Plus radio buttons to use `value` instead of `label`.
-- **TypeScript Strictness**: Resolved window property access errors in `ScreenshotCanvas.vue`.
+### Changed
+- **Sleeker Borders**: Reduced device border thickness from 44px to 28px for a more modern, minimal look.
+- **Device Info**: Displays exact screen dimensions (e.g., 6.3", 11", 13") in the device selector.
 
 ## [0.1.0] - 2026-03-22
 
