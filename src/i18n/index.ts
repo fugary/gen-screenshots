@@ -16,7 +16,11 @@ const messages = {
       noise: 'Noise Intensity',
       screenshot: 'Screenshot',
       projects: 'Saved Projects',
-      export: 'Export PNG'
+      export: 'Export PNG',
+      contentLanguage: 'Content Language',
+      projectLanguages: 'Project Languages',
+      exportTargets: 'Export Targets',
+      previewDevice: 'Preview Device'
     }
   },
   'zh-CN': {
@@ -34,7 +38,11 @@ const messages = {
       noise: '噪点强度',
       screenshot: '屏幕截图',
       projects: '项目存档',
-      export: '导出图片'
+      export: '导出图片',
+      contentLanguage: '文字内容语言',
+      projectLanguages: '项目支持语言',
+      exportTargets: '导出目标 (设备)',
+      previewDevice: '预览设备尺寸'
     }
   }
 };

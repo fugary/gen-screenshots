@@ -80,7 +80,7 @@
                 Draft
               </el-tag>
               
-              <div class="project-title-input">
+              <div class="project-title-input" v-if="store.activeSlide">
                 <el-input 
                   v-model="store.activeSlide.name" 
                   size="small"
@@ -177,7 +177,12 @@ import ControlPanel from './components/ControlPanel.vue';
 import SlideStrip from './components/SlideStrip.vue';
 
 const store = useScreenshotStore();
+store.migrateState();
 useI18n();
+
+onMounted(() => {
+  // Any secondary mounting logic
+});
 
 const adjustZoom = (delta: number) => {
   const newZoom = Math.max(0.2, Math.min(2, store.zoomLevel + delta));

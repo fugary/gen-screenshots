@@ -7,15 +7,27 @@
         <h3 class="section-title">
           {{ $t('controls.headline') }}
         </h3>
-        <div class="text-inputs">
+        <div class="locale-switcher-row" v-if="store.activeSlide && store.activeSlide.locales">
+          <span class="sub-label">{{ $t('controls.contentLanguage') }}</span>
+          <el-radio-group v-model="store.activeSlide.activeLocale" size="small">
+            <el-radio-button 
+              v-for="locale in (store.projectLocales || ['en-US'])" 
+              :key="locale" 
+              :value="locale"
+            >
+              {{ locale }}
+            </el-radio-button>
+          </el-radio-group>
+        </div>
+        <div class="text-inputs" v-if="store.activeSlide.locales[store.activeSlide.activeLocale]">
           <el-input
-            v-model="store.activeSlide.title"
+            v-model="store.activeSlide.locales[store.activeSlide.activeLocale].title"
             type="textarea"
             :rows="2"
             placeholder="Title..."
           />
           <el-input
-            v-model="store.activeSlide.subtitle"
+            v-model="store.activeSlide.locales[store.activeSlide.activeLocale].subtitle"
             type="textarea"
             :rows="2"
             placeholder="Subtitle..."
@@ -140,34 +152,137 @@
         </el-radio-group>
       </div>
 
-      <!-- Device Section -->
+      <!-- Export Targets Section -->
       <div class="panel-section">
         <h3 class="section-title">
-          {{ $t('controls.device') }}
+          {{ $t('controls.exportTargets') }}
         </h3>
-        <el-select
-          v-model="store.activeSlide.frameStyle"
-          class="custom-select"
-        >
-          <el-option-group label="iPhone (Bezel-less)">
-            <el-option label="iPhone 16 Pro Max (6.9')" value="iphone16-promax" />
-            <el-option label="iPhone 16 / 15 Pro Max (6.7')" value="iphone-6.7" />
-            <el-option label="iPhone 11 Pro Max / XS Max (6.5')" value="iphone-6.5" />
-          </el-option-group>
-          <el-option-group label="iPhone (Classic)">
-            <el-option label="iPhone 8 Plus / 7 Plus (5.5')" value="iphone-5.5" />
-          </el-option-group>
-          <el-option-group label="iPad">
-            <el-option label="iPad Pro 13' (12.9')" value="ipad-13" />
+        <el-checkbox-group v-model="store.targetDevices" class="device-checkbox-group" v-if="store.targetDevices">
+          <el-checkbox label="iPhone 16 Pro Max" value="iphone16-promax" />
+          <el-checkbox label="iPhone 6.7'" value="iphone-6.7" />
+          <el-checkbox label="iPhone 6.5'" value="iphone-6.5" />
+          <el-checkbox label="iPhone 5.5'" value="iphone-5.5" />
+          <el-checkbox label="iPad Pro 13'" value="ipad-13" />
+          <el-checkbox label="iPad Pro 11'" value="ipad-11" />
+        </el-checkbox-group>
+        <div class="preview-device-sel" v-if="store.activeSlide">
+          <span class="sub-label">{{ $t('controls.previewDevice') }}</span>
+          <el-select
+            v-model="store.activeSlide.frameStyle"
+            size="small"
+            class="custom-select"
+          >
+            <el-option label="iPhone 16 Pro Max" value="iphone16-promax" />
+            <el-option label="iPhone 6.7'" value="iphone-6.7" />
+            <el-option label="iPhone 6.5'" value="iphone-6.5" />
+            <el-option label="iPhone 5.5'" value="iphone-5.5" />
+            <el-option label="iPad Pro 13'" value="ipad-13" />
             <el-option label="iPad Pro 11'" value="ipad-11" />
-          </el-option-group>
-          <el-option label="None" value="none" />
-        </el-select>
+            <el-option label="None" value="none" />
+          </el-select>
+        </div>
       </div>
 
-      <!-- Screenshot Image Section (Added specifically to properties) -->
+      <!-- Languages Manager Section -->
       <div class="panel-section">
-        <h3 class="section-title">Screenshot Content</h3>
+        <h3 class="section-title">{{ $t('controls.projectLanguages') }}</h3>
+        <div class="language-tags">
+          <el-tag
+            v-for="locale in (store.projectLocales || [])"
+            :key="locale"
+            closable
+            :disable-transitions="false"
+            @close="store.removeLocale(locale)"
+            size="small"
+            class="lang-tag"
+          >
+            {{ locale }}
+          </el-tag>
+          <el-dropdown trigger="click" @command="store.addLocale">
+            <el-button size="small" circle icon="Plus"></el-button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="zh-CN">Chinese (zh-CN)</el-dropdown-item>
+                <el-dropdown-item command="en-US">English (en-US)</el-dropdown-item>
+                <el-dropdown-item command="ja-JP">Japanese (ja-JP)</el-dropdown-item>
+                <el-dropdown-item command="ko-KR">Korean (ko-KR)</el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+        </div>
+      </div>
+
+      <!-- Layer Manager Section -->
+      <div class="panel-section" v-if="store.activeSlide && store.activeSlide.layers">
+        <div class="section-header">
+          <h3 class="section-title">Layers</h3>
+          <el-button size="small" circle icon="Plus" @click="store.addLayer()" />
+        </div>
+        <div class="layer-list">
+          <div 
+            v-for="(layer, idx) in store.activeSlide.layers" 
+            :key="layer.id"
+            class="layer-item-row"
+            :class="{ active: selectedLayerIndex === idx }"
+            @click="selectedLayerIndex = idx"
+          >
+            <el-icon class="layer-drag"><Menu /></el-icon>
+            <span class="layer-name">Layer {{ idx + 1 }}</span>
+            <el-button 
+              v-if="store.activeSlide.layers.length > 1"
+              circle size="small" type="danger" plain 
+              icon="Delete" 
+              @click.stop="store.removeLayer(idx)"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Transformation Controls (for selected layer) -->
+      <div class="panel-section" v-if="selectedLayer">
+        <h3 class="section-title">Transformation</h3>
+        <div class="slider-grid">
+          <div class="slider-item">
+            <span class="sub-label">Rotate: {{ selectedLayer.rotateZ }}°</span>
+            <el-slider v-model="selectedLayer.rotateZ" :min="-180" :max="180" :show-tooltip="false" />
+          </div>
+          <div class="slider-item">
+            <span class="sub-label">Scale: {{ selectedLayer.scale.toFixed(2) }}x</span>
+            <el-slider v-model="selectedLayer.scale" :min="0.2" :max="2.0" :step="0.05" :show-tooltip="false" />
+          </div>
+          <div class="slider-item">
+            <span class="sub-label">Position X: {{ selectedLayer.x }}%</span>
+            <el-slider v-model="selectedLayer.x" :min="0" :max="100" :show-tooltip="false" />
+          </div>
+          <div class="slider-item">
+            <span class="sub-label">Position Y: {{ selectedLayer.y }}%</span>
+            <el-slider v-model="selectedLayer.y" :min="0" :max="100" :show-tooltip="false" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Premium Layouts Gallery -->
+      <div class="panel-section">
+        <h3 class="section-title">Premium Layouts</h3>
+        <div class="layout-presets-grid">
+          <div class="layout-preset-btn" @click="store.applyLayoutPreset('tilted-duo')">
+            <div class="layout-icon duo"></div>
+            <span>Tilted Duo</span>
+          </div>
+          <div class="layout-preset-btn" @click="store.applyLayoutPreset('stacked-trio')">
+            <div class="layout-icon trio"></div>
+            <span>Stacked Trio</span>
+          </div>
+          <div class="layout-preset-btn" @click="store.applyLayoutPreset('offset-right')">
+            <div class="layout-icon offset"></div>
+            <span>Offset Focus</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Screenshot Image Section (Points to selected layer) -->
+      <div class="panel-section" v-if="selectedLayer">
+        <h3 class="section-title">Layer Image</h3>
         <el-upload
           action="#"
           :auto-upload="false"
@@ -175,8 +290,8 @@
           :show-file-list="false"
           class="user-image-uploader"
         >
-          <div v-if="store.activeSlide.userImage" class="image-preview-container">
-            <img :src="store.activeSlide.userImage" class="user-image-preview" />
+          <div v-if="selectedLayer.userImage" class="image-preview-container">
+            <img :src="selectedLayer.userImage" class="user-image-preview" />
             <div class="image-overlay">
               <el-icon><Edit /></el-icon>
             </div>
@@ -245,16 +360,22 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useScreenshotStore } from '../store/screenshot';
 import { UploadFile, ElMessage } from 'element-plus';
 import { 
   UploadFilled, Refresh, Delete, Plus, 
-  CopyDocument, Edit, Download 
+  CopyDocument, Edit, Download, Menu
 } from '@element-plus/icons-vue';
 
 const store = useScreenshotStore();
 const newProjectName = ref('');
+const selectedLayerIndex = ref(0);
+
+const selectedLayer = computed(() => {
+  if (!store.activeSlide || !store.activeSlide.layers) return null;
+  return store.activeSlide.layers[selectedLayerIndex.value] || store.activeSlide.layers[0] || null;
+});
 
 const bgImages = [
   { name: 'Aurora', url: '/presets/bg4.png' },
@@ -279,10 +400,10 @@ const applyPreset = (c1: string, c2: string) => {
 
 const handleUserImageUpload = (uploadFile: UploadFile) => {
   const file = uploadFile.raw;
-  if (file) {
+  if (file && selectedLayer.value) {
     const reader = new FileReader();
     reader.onload = (e) => {
-      store.updateActiveSlide({ userImage: e.target?.result as string });
+      store.updateLayer(selectedLayer.value.id, { userImage: e.target?.result as string });
     };
     reader.readAsDataURL(file);
   }
@@ -512,30 +633,134 @@ const handleSaveProject = () => {
   font-weight: 500;
 }
 
-/* Custom Element Plus Overrides */
-:deep(.el-textarea__inner) {
-  background: rgba(var(--text-main-rgb), 0.03);
-  border: 1px solid var(--glass-border);
-  border-radius: 8px;
-  color: var(--text-main);
-  padding: 12px;
+.locale-switcher-row {
+  margin-bottom: 12px;
 }
 
-:deep(.el-input__wrapper) {
-  background: rgba(var(--text-main-rgb), 0.03);
-  box-shadow: 0 0 0 1px var(--glass-border) inset;
-  border-radius: 8px;
+.device-checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
 }
 
-:deep(.el-radio-button__inner) {
-  background: transparent;
-  border: 1px solid var(--glass-border);
+.device-checkbox-group :deep(.el-checkbox) {
+  margin-right: 0;
   color: var(--text-muted);
-  font-size: 12px;
 }
 
-:deep(.el-radio-button__orig-radio:checked + .el-radio-button__inner) {
-  background: var(--accent-color);
+.preview-device-sel {
+  border-top: 1px solid var(--glass-border);
+  padding-top: 12px;
+}
+
+.language-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.layer-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.layer-item-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: rgba(var(--text-main-rgb), 0.03);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.layer-item-row.active {
+  background: rgba(var(--accent-rgb), 0.1);
   border-color: var(--accent-color);
+}
+
+.layer-drag {
+  color: var(--text-muted);
+  cursor: grab;
+}
+
+.layer-name {
+  flex-grow: 1;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.slider-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.layout-presets-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.layout-preset-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 8px;
+  background: rgba(var(--text-main-rgb), 0.03);
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.layout-preset-btn:hover {
+  background: rgba(var(--text-main-rgb), 0.06);
+  transform: translateY(-2px);
+}
+
+.layout-preset-btn span {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.layout-icon {
+  width: 40px;
+  height: 30px;
+  background: var(--glass-border);
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+}
+
+.layout-icon::after, .layout-icon::before {
+  content: '';
+  position: absolute;
+  background: var(--accent-color);
+  opacity: 0.6;
+  border-radius: 1px;
+}
+
+.layout-icon.duo::before { width: 14px; height: 22px; left: 6px; top: 4px; transform: rotate(-10deg); }
+.layout-icon.duo::after { width: 14px; height: 22px; right: 6px; top: 2px; transform: rotate(10deg); }
+
+.layout-icon.trio::before { width: 10px; height: 18px; left: 4px; top: 6px; transform: rotate(-10deg); }
+.layout-icon.trio::after { width: 10px; height: 18px; right: 4px; top: 6px; transform: rotate(10deg); }
+.layout-icon.trio { background: linear-gradient(to bottom, var(--glass-border), var(--glass-border)) center no-repeat; background-size: 14px 22px; }
+
+.layout-icon.offset::before { width: 20px; height: 32px; right: -5px; top: 2px; transform: rotate(-5deg); }
+
+.lang-tag {
+  background: rgba(var(--text-main-rgb), 0.05);
+  border-color: var(--glass-border);
+  color: var(--text-main);
 }
 </style>

@@ -19,14 +19,15 @@ const canvasRef = ref<HTMLCanvasElement | null>(null);
 const containerRef = ref<HTMLDivElement | null>(null);
 const ctxRef = ref<CanvasRenderingContext2D | null>(null);
 
-const getCanvasDimensions = () => {
-  switch (store.frameStyle) {
-    case 'iphone16-promax': return { width: 1320, height: 2868 }; // 6.9"
-    case 'iphone-6.7': return { width: 1290, height: 2796 }; // 6.7"
-    case 'iphone-6.5': return { width: 1242, height: 2688 }; // 6.5"
-    case 'iphone-5.5': return { width: 1242, height: 2208 }; // 5.5"
-    case 'ipad-13': return { width: 2048, height: 2732 };    // iPad Pro 12.9"/13"
-    case 'ipad-11': return { width: 1668, height: 2388 };    // iPad Pro 11"
+const getCanvasDimensions = (style?: string) => {
+  const frame = style || store.frameStyle;
+  switch (frame) {
+    case 'iphone16-promax': return { width: 1320, height: 2868 }; 
+    case 'iphone-6.7': return { width: 1290, height: 2796 }; 
+    case 'iphone-6.5': return { width: 1242, height: 2688 }; 
+    case 'iphone-5.5': return { width: 1242, height: 2208 }; 
+    case 'ipad-13': return { width: 2048, height: 2732 };    
+    case 'ipad-11': return { width: 1668, height: 2388 };    
     default: return { width: 1290, height: 2796 };
   }
 };
@@ -52,7 +53,7 @@ const loadImage = (src: string): Promise<HTMLImageElement> => {
   });
 };
 
-const draw = async () => {
+const draw = async (overrideStyle?: string) => {
   const canvas = canvasRef.value;
   if (!canvas) return;
   
@@ -62,9 +63,11 @@ const draw = async () => {
   const ctx = ctxRef.value;
   if (!ctx) return;
 
-  const dims = getCanvasDimensions();
+  const dims = getCanvasDimensions(overrideStyle);
   canvasWidth.value = dims.width;
   canvasHeight.value = dims.height;
+  
+  await new Promise(r => setTimeout(r, 0));
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   
@@ -72,17 +75,18 @@ const draw = async () => {
     try {
       const bgImg = await loadImage(store.bgImage);
       ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
-      await drawLayers(ctx, canvas, true);
+      await drawLayers(ctx, canvas, true, overrideStyle);
     } catch (e) {
       console.error("Failed to load background image", e);
-      await drawLayers(ctx, canvas, false);
+      await drawLayers(ctx, canvas, false, overrideStyle);
     }
   } else {
-    await drawLayers(ctx, canvas, false);
+    await drawLayers(ctx, canvas, false, overrideStyle);
   }
 };
 
-const drawLayers = async (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, hasBgImg: boolean) => {
+const drawLayers = async (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, hasBgImg: boolean, overrideStyle?: string) => {
+  // 1. Draw Background & Noise
   if (!hasBgImg) {
     if (store.bgType === 'linear') {
       const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
@@ -112,50 +116,40 @@ const drawLayers = async (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasEleme
     ctx.restore();
   }
 
-  // Adaptive Text Color
+  // 2. Adaptive Text Color Calculation
   const bgColor = store.bgImage ? '#000000' : store.bgColor1;
   const luminance = getLuminance(bgColor);
   const textColor = store.adaptiveText ? (luminance > 160 ? '#1e293b' : '#ffffff') : store.textColor;
   
+  // 3. Draw Device Layers
+  const layers = store.activeSlide.layers;
+  for (const layer of layers) {
+    await drawDeviceLayer(ctx, canvas, layer, textColor, overrideStyle);
+  }
+
+  // 4. Draw Typography (Top Level Overlay)
+  await drawTypography(ctx, canvas, textColor);
+};
+
+const drawTypography = async (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, textColor: string) => {
+  ctx.save();
   ctx.fillStyle = textColor;
-  
-  const isIPad = store.frameStyle.includes('ipad');
-  const is55 = store.frameStyle === 'iphone-5.5';
-  
-  let frameW = isIPad ? canvas.width * 0.82 : canvas.width * 0.85;
-  let frameH = isIPad ? frameW * 1.33 : frameW * 2.16;
-  if (is55) {
-      frameW = canvas.width * 0.8;
-      frameH = frameW * 1.77;
-  }
-  
-  const borderRadius = isIPad ? 45 : 80;
-
-  // Content Grouping & Centering
-  const titleLines = store.activeSlide.title.split('\n');
-  const subLines = store.activeSlide.subtitle.split('\n');
-  const lineHeightTitle = store.fontSize * 1.1;
-  const lineHeightSub = store.subtitleFontSize * 1.3;
-  const gapBetweenTitleSubtitle = 30;
-  const gapBetweenTextAndDevice = 60;
-
-  const totalTextHeight = (titleLines.length * lineHeightTitle) + (subLines.length * lineHeightSub) + gapBetweenTitleSubtitle;
-  const totalContentHeight = totalTextHeight + gapBetweenTextAndDevice + frameH;
-  
-  const startY = (canvas.height - totalContentHeight) / 2;
-  let textY = startY + (titleLines.length * lineHeightTitle / 2);
-  let deviceY = startY + totalTextHeight + gapBetweenTextAndDevice;
-
-  if (store.layout === 'bottom') {
-    deviceY = startY;
-    textY = startY + frameH + gapBetweenTextAndDevice + (titleLines.length * lineHeightTitle / 2);
-  }
-
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.shadowColor = 'rgba(0,0,0,0.3)';
   ctx.shadowBlur = 25;
   ctx.shadowOffsetY = 10;
+
+  const titleLines = store.title.split('\n');
+  const subLines = store.subtitle.split('\n');
+  const lineHeightTitle = store.fontSize * 1.1;
+  const lineHeightSub = store.subtitleFontSize * 1.3;
+  const gapBetweenTitleSubtitle = 30;
+
+  let textY = canvas.height * 0.15; // Default Top
+  if (store.layout === 'bottom') {
+    textY = canvas.height * 0.85;
+  }
 
   // Title
   ctx.font = `bold ${store.fontSize}px 'Inter', -apple-system, sans-serif`;
@@ -168,32 +162,55 @@ const drawLayers = async (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasEleme
   ctx.font = `500 ${store.subtitleFontSize}px 'Inter', -apple-system, sans-serif`;
   ctx.globalAlpha = 0.85;
   subLines.forEach((line, i) => {
-    ctx.fillText(line, canvas.width / 2, textY + (subLines.length > 0 ? (lineHeightTitle * titleLines.length / 2) + gapBetweenTitleSubtitle + (i * lineHeightSub) : 0));
+    ctx.fillText(line, canvas.width / 2, textY + (titleLines.length * lineHeightTitle / 2) + gapBetweenTitleSubtitle + (i * lineHeightSub));
   });
-  ctx.globalAlpha = 1.0;
-  ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+  ctx.restore();
+};
 
-  const x = (canvas.width - frameW) / 2;
-  const y = deviceY;
+const drawDeviceLayer = async (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, layer: any, textColor: string, overrideStyle?: string) => {
+  const frameStyle = overrideStyle || layer.frameStyle;
+  if (frameStyle === 'none') return;
 
-  if (store.frameStyle !== 'none') {
-    ctx.save();
-    ctx.shadowColor = (textColor === '#ffffff') ? store.glowColor : 'rgba(0,0,0,0.15)';
-    ctx.shadowBlur = 180;
-    ctx.shadowOffsetY = 100;
-    ctx.fillStyle = '#000000';
-    if (is55) {
-      ctx.fillRect(x, y, frameW, frameH);
-    } else {
-      roundRect(ctx, x, y, frameW, frameH, borderRadius);
-      ctx.fill();
-    }
-    ctx.restore();
+  const isIPad = frameStyle.includes('ipad');
+  const is55 = frameStyle === 'iphone-5.5';
+  
+  let frameW = isIPad ? canvas.width * 0.82 : canvas.width * 0.85;
+  let frameH = isIPad ? frameW * 1.33 : frameW * 2.16;
+  if (is55) {
+      frameW = canvas.width * 0.8;
+      frameH = frameW * 1.77;
   }
+  
+  const borderRadius = isIPad ? 45 : 80;
 
-  if (store.activeSlide.userImage) {
+  ctx.save();
+  // Apply Transformations
+  ctx.translate(canvas.width * (layer.x / 100), canvas.height * (layer.y / 100));
+  ctx.rotate(layer.rotateZ * Math.PI / 180);
+  ctx.scale(layer.scale, layer.scale);
+  ctx.globalAlpha = layer.opacity || 1.0;
+
+  const x = -frameW / 2;
+  const y = -frameH / 2;
+
+  // Shadow
+  ctx.save();
+  ctx.shadowColor = (textColor === '#ffffff') ? store.glowColor : 'rgba(0,0,0,0.15)';
+  ctx.shadowBlur = layer.shadowBlur || 100;
+  ctx.shadowOffsetY = 100;
+  ctx.fillStyle = '#000000';
+  if (is55) {
+    ctx.fillRect(x, y, frameW, frameH);
+  } else {
+    roundRect(ctx, x, y, frameW, frameH, borderRadius);
+    ctx.fill();
+  }
+  ctx.restore();
+
+  // Screen Image
+  if (layer.userImage) {
     try {
-      const img = await loadImage(store.activeSlide.userImage);
+      const img = await loadImage(layer.userImage);
       ctx.save();
       if (is55) {
         ctx.beginPath(); ctx.rect(x, y, frameW, frameH); ctx.clip();
@@ -202,10 +219,9 @@ const drawLayers = async (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasEleme
       }
       ctx.drawImage(img, x, y, frameW, frameH);
       ctx.restore();
-      drawDeviceBorder(ctx, x, y, frameW, frameH, borderRadius, isIPad, is55);
+      drawDeviceBorderSingle(ctx, x, y, frameW, frameH, borderRadius, isIPad, is55, frameStyle);
     } catch (e) {
-      console.error("Failed to load user image", e);
-      drawDeviceBorder(ctx, x, y, frameW, frameH, borderRadius, isIPad, is55);
+      drawDeviceBorderSingle(ctx, x, y, frameW, frameH, borderRadius, isIPad, is55, frameStyle);
     }
   } else {
     ctx.save();
@@ -215,24 +231,14 @@ const drawLayers = async (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasEleme
     } else {
       roundRect(ctx, x, y, frameW, frameH, borderRadius); ctx.fill();
     }
-    const screenGrad = ctx.createLinearGradient(x, y, x, y + frameH);
-    screenGrad.addColorStop(0, 'rgba(255,255,255,0.06)');
-    screenGrad.addColorStop(0.5, 'rgba(255,255,255,0)');
-    screenGrad.addColorStop(1, 'rgba(255,255,255,0.03)');
-    ctx.fillStyle = screenGrad;
-    if (is55) {
-      ctx.fillRect(x, y, frameW, frameH);
-    } else {
-      roundRect(ctx, x, y, frameW, frameH, borderRadius); ctx.fill();
-    }
     ctx.restore();
-    drawDeviceBorder(ctx, x, y, frameW, frameH, borderRadius, isIPad, is55);
+    drawDeviceBorderSingle(ctx, x, y, frameW, frameH, borderRadius, isIPad, is55, frameStyle);
   }
+
+  ctx.restore();
 };
 
-const drawDeviceBorder = (ctx: CanvasRenderingContext2D, x: number, y: number, frameW: number, frameH: number, borderRadius: number, isIPad: boolean, is55: boolean) => {
-  if (store.frameStyle === 'none') return;
-  
+const drawDeviceBorderSingle = (ctx: CanvasRenderingContext2D, x: number, y: number, frameW: number, frameH: number, borderRadius: number, isIPad: boolean, is55: boolean, frameStyle: string) => {
   ctx.save();
   const borderThickness = 30;
   ctx.strokeStyle = '#1c1c1e';
@@ -258,7 +264,7 @@ const drawDeviceBorder = (ctx: CanvasRenderingContext2D, x: number, y: number, f
 
   if (!isIPad && !is55) {
     ctx.fillStyle = '#000000';
-    roundRect(ctx, canvasWidth.value/2 - 130, y + 45, 260, 70, 35);
+    roundRect(ctx, -130, y + 45, 260, 70, 35);
     ctx.fill();
   }
   ctx.restore();
@@ -267,21 +273,16 @@ const drawDeviceBorder = (ctx: CanvasRenderingContext2D, x: number, y: number, f
 const handleExport = async () => {
   const canvas = canvasRef.value;
   if (!canvas) return;
-
   try {
     const dataUrl = canvas.toDataURL('image/png');
     const base64Data = dataUrl.split(',')[1];
     const binaryData = Uint8Array.from(atob(base64Data), (c) => c.charCodeAt(0));
-
     if ((window as any).__TAURI_INTERNALS__) {
       const path = await save({
         filters: [{ name: 'PNG Image', extensions: ['png'] }],
         defaultPath: `${store.activeSlide.name}.png`
       });
-
-      if (path) {
-        await writeFile(path, binaryData);
-      }
+      if (path) await writeFile(path, binaryData);
     } else {
       const link = document.createElement('a');
       link.download = `${store.activeSlide.name}-${Date.now()}.png`;
@@ -294,24 +295,27 @@ const handleExport = async () => {
 };
 
 const handleBatchExport = async () => {
-  const originalIndex = store.activeSlideIndex;
-  
+  const originalSlideIndex = store.activeSlideIndex;
   for (let i = 0; i < store.slides.length; i++) {
     store.activeSlideIndex = i;
-    await draw();
-    await new Promise(r => setTimeout(r, 100)); // Small buffer
-    
-    const canvas = canvasRef.value;
-    if (!canvas) continue;
-
-    const dataUrl = canvas.toDataURL('image/png');
-    const link = document.createElement('a');
-    link.download = `${store.slides[i].name}.png`;
-    link.href = dataUrl;
-    link.click();
+    const originalLocale = store.activeSlide.activeLocale;
+    for (const locale of store.projectLocales) {
+      store.activeSlide.activeLocale = locale;
+      for (const device of store.targetDevices) {
+        await draw(device);
+        await new Promise(r => setTimeout(r, 150)); 
+        const canvas = canvasRef.value;
+        if (!canvas) continue;
+        const dataUrl = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.download = `${store.slides[i].name}_${locale}_${device}.png`;
+        link.href = dataUrl;
+        link.click();
+      }
+    }
+    store.activeSlide.activeLocale = originalLocale;
   }
-  
-  store.activeSlideIndex = originalIndex;
+  store.activeSlideIndex = originalSlideIndex;
   await draw();
 };
 

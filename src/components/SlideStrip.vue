@@ -26,9 +26,14 @@
           @click="store.activeSlideIndex = index"
         >
           <div class="tile-preview" :style="getThumbStyle(slide)">
-            <div v-if="!slide.userImage" class="tile-placeholder">
+            <div v-if="!(slide.layers && slide.layers[0]?.userImage)" class="tile-placeholder">
               <el-icon><Picture /></el-icon>
             </div>
+            <div 
+              v-else-if="slide.layers && slide.layers[0]"
+              class="tile-image" 
+              :style="{ backgroundImage: `url(${slide.layers[0].userImage})` }"
+            ></div>
             <div class="tile-overlay">
               <el-button 
                 circle 
@@ -218,6 +223,14 @@ const dispatchBatchExport = () => {
 
 .tile-preview:hover .tile-overlay {
   opacity: 1;
+}
+
+.tile-image {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  z-index: 1;
 }
 
 .tile-label {
