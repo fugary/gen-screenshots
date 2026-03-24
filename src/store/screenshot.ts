@@ -191,7 +191,57 @@ export const useScreenshotStore = defineStore('screenshot', {
         case 'offset-right':
           slide.layers[0] = { ...slide.layers[0], x: 70, y: 60, rotateZ: -8, scale: 1.1 };
           break;
+        case 'center-hero':
+          slide.layers[0] = { ...slide.layers[0], x: 50, y: 55, rotateZ: 0, scale: 1.1 };
+          break;
+        case 'feature-left':
+          slide.layers[0] = { ...slide.layers[0], x: 30, y: 60, rotateZ: 5, scale: 0.9 };
+          break;
       }
+    },
+
+    applyTemplateSet(setId: string) {
+      this.slides = []; // Clear current slides
+      const defaultLocale = this.projectLocales[0] || 'en-US';
+      
+      if (setId === 'midnight-pro') {
+        // 1. Intro Center
+        const s1 = createDefaultSlide(Date.now().toString() + '1', 'Intro', defaultLocale);
+        s1.bgColor1 = '#1e1e2e'; s1.bgColor2 = '#11111b';
+        s1.layers[0] = { ...s1.layers[0], x: 50, y: 55, rotateZ: 0, scale: 1.05 };
+        this.slides.push(s1);
+
+        // 2. Feature Right
+        const s2 = createDefaultSlide(Date.now().toString() + '2', 'Features', defaultLocale);
+        s2.bgColor1 = '#1e1e2e'; s2.bgColor2 = '#11111b';
+        s2.layers[0] = { ...s2.layers[0], x: 75, y: 60, rotateZ: -5, scale: 1.0 };
+        this.slides.push(s2);
+
+        // 3. Tilted Duo
+        const s3 = createDefaultSlide(Date.now().toString() + '3', 'Comparison', defaultLocale);
+        s3.bgColor1 = '#1e1e2e'; s3.bgColor2 = '#11111b';
+        s3.layers = [createDefaultLayer('l1'), createDefaultLayer('l2')];
+        s3.layers[0] = { ...s3.layers[0], x: 35, y: 65, rotateZ: -12, scale: 0.9 };
+        s3.layers[1] = { ...s3.layers[1], x: 65, y: 55, rotateZ: 12, scale: 0.9 };
+        this.slides.push(s3);
+
+        // 4. Stacked Trio
+        const s4 = createDefaultSlide(Date.now().toString() + '4', 'Gallery', defaultLocale);
+        s4.bgColor1 = '#1e1e2e'; s4.bgColor2 = '#11111b';
+        s4.layers = [createDefaultLayer('l1'), createDefaultLayer('l2'), createDefaultLayer('l3')];
+        s4.layers[0] = { ...s4.layers[0], x: 50, y: 60, rotateZ: 0, scale: 1.05 };
+        s4.layers[1] = { ...s4.layers[1], x: 20, y: 65, rotateZ: -10, scale: 0.85 };
+        s4.layers[2] = { ...s4.layers[2], x: 80, y: 65, rotateZ: 10, scale: 0.85 };
+        this.slides.push(s4);
+
+        // 5. Outro Zoom
+        const s5 = createDefaultSlide(Date.now().toString() + '5', 'Download', defaultLocale);
+        s5.bgColor1 = '#1e1e2e'; s5.bgColor2 = '#11111b';
+        s5.layers[0] = { ...s5.layers[0], x: 50, y: 80, rotateZ: 0, scale: 1.4 };
+        this.slides.push(s5);
+      }
+      
+      this.activeSlideIndex = 0;
     },
 
     addLocale(locale: string) {

@@ -4,190 +4,101 @@
       class="app-wrapper"
       :class="{ 'dark': store.theme === 'dark' }"
     >
-      <!-- Background Glow -->
       <div class="bg-glow" />
       
-      <el-container class="main-layout">
-        <!-- 1. Left Navigation Sidebar -->
-        <el-aside
-          width="80px"
-          class="nav-sidebar glass"
-        >
-          <div class="logo">
-            <el-icon :size="28">
-              <CameraFilled />
-            </el-icon>
-          </div>
-          <div class="nav-items">
-            <div 
-              class="nav-item" 
-              :class="{ active: store.currentTab === 'canvas' }"
-              @click="store.setProject({ currentTab: 'canvas' })"
-            >
+      <div class="main-layout">
+        <!-- 1. Sidebar (Fixed 80px) -->
+        <aside class="sidebar-nav glass">
+          <div class="nav-top">
+            <div class="logo">
               <el-icon><CameraFilled /></el-icon>
             </div>
-            <div 
-              class="nav-item" 
-              :class="{ active: store.currentTab === 'image' }"
-              @click="store.setProject({ currentTab: 'image' })"
-            >
-              <el-icon><Picture /></el-icon>
-            </div>
-            <div 
-              class="nav-item"
-              :class="{ active: store.currentTab === 'presets' }"
-              @click="store.setProject({ currentTab: 'presets' })"
-            >
-              <el-icon><Collection /></el-icon>
-            </div>
-            <div 
-              class="nav-item"
-              :class="{ active: store.currentTab === 'settings' }"
-              @click="store.setProject({ currentTab: 'settings' })"
-            >
-              <el-icon><Setting /></el-icon>
-            </div>
-          </div>
-          <div class="nav-footer">
-            <div
-              class="theme-toggle"
-              @click="toggleTheme"
-            >
-              <el-icon v-if="store.theme === 'dark'">
-                <Sunny />
-              </el-icon>
-              <el-icon v-else>
-                <Moon />
-              </el-icon>
-            </div>
-          </div>
-        </el-aside>
-
-        <!-- 2. Main Content Area -->
-        <el-container class="content-area">
-          <el-header
-            height="64px"
-            class="top-bar glass"
-          >
-            <div class="toolbar-left">
-              <span class="project-name">{{ $t('app.title') }}</span>
-              <el-tag
-                size="small"
-                type="info"
-                effect="plain"
-                class="status-tag"
-              >
-                Draft
-              </el-tag>
-              
-              <div class="project-title-input" v-if="store.activeSlide">
-                <el-input 
-                  v-model="store.activeSlide.name" 
-                  size="small"
-                  placeholder="Slide name"
-                  class="glass-input"
-                >
-                  <template #prefix>
-                    <el-icon><EditPen /></el-icon>
-                  </template>
-                </el-input>
+            
+            <div class="nav-items">
+              <div class="nav-item active" title="Editor">
+                <el-icon><Edit /></el-icon>
+              </div>
+              <div class="nav-item" title="Apply Template" @click="applyDefaultTemplate">
+                <el-icon><Grid /></el-icon>
               </div>
             </div>
+          </div>
+          
+          <div class="nav-footer">
+            <div class="theme-toggle" @click="toggleTheme" :title="$t('controls.theme')">
+              <el-icon v-if="store.theme === 'dark'"><Sunny /></el-icon>
+              <el-icon v-else><Moon /></el-icon>
+            </div>
+          </div>
+        </aside>
+
+        <!-- 2. Main content area (Liquid) -->
+        <main class="main-content">
+          <header class="top-bar glass">
+            <div class="toolbar-left">
+              <el-tag size="small" effect="dark" class="status-tag">V4 Pro</el-tag>
+              <div class="project-title">{{ $t('app.title') }}</div>
+            </div>
+            
             <div class="toolbar-right">
-              <el-button-group class="zoom-controls">
-                <el-button
-                  size="small"
-                  @click="adjustZoom(-0.1)"
-                >
-                  <el-icon><Minus /></el-icon>
-                </el-button>
-                <el-button
-                  size="small"
-                  class="zoom-value"
-                >
-                  {{ Math.round(store.zoomLevel * 100) }}%
-                </el-button>
-                <el-button
-                  size="small"
-                  @click="adjustZoom(0.1)"
-                >
-                  <el-icon><Plus /></el-icon>
-                </el-button>
-              </el-button-group>
               <div class="language-switcher">
-                <el-radio-group
-                  v-model="store.language"
-                  size="small"
-                  class="custom-radio"
-                >
-                  <el-radio-button label="zh-CN">
-                    ZH
-                  </el-radio-button>
-                  <el-radio-button label="en-US">
-                    EN
-                  </el-radio-button>
+                <el-radio-group v-model="store.language" size="small">
+                  <el-radio-button value="zh-CN">ZH</el-radio-button>
+                  <el-radio-button value="en-US">EN</el-radio-button>
                 </el-radio-group>
               </div>
-              <el-button
-                type="primary"
-                class="export-btn"
-                @click="handleExport"
-              >
-                <el-icon class="el-icon--left">
-                  <Download />
-                </el-icon>
+              
+              <el-button type="primary" size="small" @click="handleExport">
+                <el-icon><Download /></el-icon>
                 {{ $t('controls.export') }}
               </el-button>
             </div>
-          </el-header>
+          </header>
 
-          <el-main class="main-workspace">
-            <SlideStrip />
-            <div class="canvas-area">
-              <div
-                class="canvas-viewport"
-                :style="{ transform: `scale(${store.zoomLevel})` }"
-              >
-                <ScreenshotCanvas />
+          <!-- V4 Horizontal Workspace -->
+          <section class="workspace-scroll-area">
+            <div class="slides-container">
+              <SlideEditor 
+                v-for="(slide, index) in store.slides" 
+                :key="slide.id"
+                :slide="slide"
+                :index="index"
+              />
+              
+              <!-- Add Page Button -->
+              <div class="add-slide-card" @click="store.addSlide">
+                <div class="add-inner glass">
+                  <el-icon><Plus /></el-icon>
+                  <span>Add Page</span>
+                </div>
               </div>
             </div>
-            <div class="right-panel-wrapper">
-              <ControlPanel />
-            </div>
-          </el-main>
-        </el-container>
-      </el-container>
+          </section>
+        </main>
+
+        <!-- 3. Properties (Fixed 360px) -->
+        <aside class="right-panel-wrapper">
+          <ControlPanel />
+        </aside>
+      </div>
     </div>
   </el-config-provider>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
 import { useScreenshotStore } from './store/screenshot';
 import { useI18n } from 'vue-i18n';
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import en from 'element-plus/es/locale/lang/en';
 import { 
-  CameraFilled, Picture, Collection, Setting, 
-  Sunny, Moon, Plus, Minus, Download,
-  EditPen
+  CameraFilled, Edit, Grid, Sunny, Moon, Download, Plus
 } from '@element-plus/icons-vue';
-import ScreenshotCanvas from './components/ScreenshotCanvas.vue';
+import SlideEditor from './components/SlideEditor.vue';
 import ControlPanel from './components/ControlPanel.vue';
-import SlideStrip from './components/SlideStrip.vue';
 
 const store = useScreenshotStore();
 store.migrateState();
 useI18n();
-
-onMounted(() => {
-  // Any secondary mounting logic
-});
-
-const adjustZoom = (delta: number) => {
-  const newZoom = Math.max(0.2, Math.min(2, store.zoomLevel + delta));
-  store.setProject({ zoomLevel: newZoom });
-};
 
 const toggleTheme = () => {
   store.setProject({ theme: store.theme === 'dark' ? 'light' : 'dark' });
@@ -196,83 +107,45 @@ const toggleTheme = () => {
 const handleExport = () => {
   window.dispatchEvent(new CustomEvent('export-canvas'));
 };
+
+const applyDefaultTemplate = () => {
+  store.applyTemplateSet('midnight-pro');
+};
 </script>
 
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
 :root {
-  --app-bg: #f8fafc;
-  --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-border: rgba(0, 0, 0, 0.05);
-  --accent-color: #6366f1;
+  --bg-color: #f8fafc;
   --text-main: #1e293b;
-  --text-main-rgb: 30, 41, 59;
   --text-muted: #64748b;
-  --workspace-bg: radial-gradient(circle at center, #f1f5f9 0%, #e2e8f0 100%);
+  --accent-color: #6366f1;
+  --accent-color-rgb: 99, 102, 241;
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(0, 0, 0, 0.08);
+  --workspace-bg: #f1f5f9;
 }
 
 .dark {
-  --app-bg: #0f172a;
-  --glass-bg: rgba(30, 41, 59, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --text-main: #f8fafc;
-  --text-main-rgb: 248, 250, 252;
+  --bg-color: #0f172a;
+  --text-main: #f1f5f9;
   --text-muted: #94a3b8;
-  --workspace-bg: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+  --accent-color: #818cf8;
+  --accent-color-rgb: 129, 140, 248;
+  --glass-bg: rgba(15, 23, 42, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --workspace-bg: #020617;
 }
 
 body {
   margin: 0;
-  font-family: 'Inter', -apple-system, sans-serif;
-  background-color: var(--app-bg);
+  font-family: 'Inter', -apple-system, system-ui, sans-serif;
+  background-color: var(--bg-color);
   color: var(--text-main);
   overflow: hidden;
 }
 
-/* Custom Scrollbar Styles */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(var(--text-main-rgb), 0.1);
-  border-radius: 10px;
-  transition: background 0.2s;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(var(--text-main-rgb), 0.2);
-}
-
-.dark ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-/* For el-scrollbar */
-:deep(.el-scrollbar__bar) {
-  opacity: 1 !important;
-}
-
-:deep(.el-scrollbar__thumb) {
-  background-color: rgba(var(--text-main-rgb), 0.1) !important;
-  width: 4px !important;
-}
-
-.dark :deep(.el-scrollbar__thumb) {
-  background-color: rgba(255, 255, 255, 0.1) !important;
-}
-
 .app-wrapper {
+  width: 100vw;
   height: 100vh;
   position: relative;
   overflow: hidden;
@@ -280,41 +153,36 @@ body {
 
 .bg-glow {
   position: absolute;
-  top: -20%;
-  right: -10%;
-  width: 60%;
-  height: 60%;
-  background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%);
-  filter: blur(80px);
-  z-index: 0;
+  top: -10%;
+  left: -10%;
+  width: 120%;
+  height: 120%;
+  background: radial-gradient(circle at 50% 50%, rgba(var(--accent-color-rgb), 0.05) 0%, transparent 70%);
   pointer-events: none;
 }
 
 .main-layout {
+  display: flex;
+  width: 100%;
   height: 100%;
   position: relative;
   z-index: 1;
-  padding: 12px;
-  gap: 12px;
 }
 
-.glass {
-  background: var(--glass-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--glass-border);
-  border-radius: 16px;
-}
-
-/* Nav Sidebar */
-.nav-sidebar {
+/* 1. Sidebar */
+.sidebar-nav {
+  width: 80px;
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 24px 0;
+  border-right: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
 }
 
 .logo {
+  font-size: 28px;
   color: var(--accent-color);
   margin-bottom: 40px;
 }
@@ -323,7 +191,6 @@ body {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  flex: 1;
 }
 
 .nav-item {
@@ -334,136 +201,145 @@ body {
   justify-content: center;
   border-radius: 12px;
   cursor: pointer;
-  transition: all 0.2s;
   color: var(--text-muted);
+  transition: all 0.3s;
 }
 
 .nav-item:hover {
-  background: rgba(0, 0, 0, 0.05);
-  color: var(--text-main);
-}
-
-.dark .nav-item:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(var(--accent-color-rgb), 0.1);
+  color: var(--accent-color);
 }
 
 .nav-item.active {
   background: var(--accent-color);
-  color: #fff;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  color: white;
+  box-shadow: 0 8px 20px rgba(var(--accent-color-rgb), 0.3);
 }
 
 .nav-footer {
   margin-top: auto;
 }
 
-.theme-toggle {
-  width: 44px;
-  height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  cursor: pointer;
-  background: rgba(var(--text-main-rgb), 0.08);
-  color: var(--text-main);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid var(--glass-border);
-}
-
-.theme-toggle:hover {
-  background: var(--accent-color);
-  color: #fff;
-  transform: rotate(45deg);
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
-}
-
-/* Content Area */
-.content-area {
+/* 2. Main Content */
+.main-content {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  overflow: hidden;
+  padding: 16px;
+  gap: 16px;
 }
 
 .top-bar {
+  height: 60px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 20px;
+  padding: 0 24px;
+  border-radius: 16px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
 }
 
 .toolbar-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
 }
 
-.project-name {
-  font-weight: 700;
+.project-title {
+  font-weight: 800;
   font-size: 18px;
   letter-spacing: -0.5px;
-  background: linear-gradient(135deg, var(--text-main) 0%, var(--accent-color) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
-}
-
-.status-tag {
-  border-radius: 6px;
 }
 
 .toolbar-right {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 24px;
 }
 
-.language-switcher {
-  margin-right: 8px;
-}
-
-.main-workspace {
+/* V4 Workspace Scroll */
+.workspace-scroll-area {
   flex: 1;
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
   display: flex;
-  overflow: hidden;
-  background: var(--workspace-bg);
-  border-radius: 16px;
-  position: relative;
+  align-items: stretch;
+  padding: 20px 0;
+  cursor: grab;
 }
 
-.canvas-area {
-  flex: 1;
+.workspace-scroll-area:active {
+  cursor: grabbing;
+}
+
+.slides-container {
   display: flex;
-  justify-content: center;
+  gap: 32px;
+  padding: 0 40px;
+  min-width: 100%;
+}
+
+.add-slide-card {
+  flex: 0 0 320px;
+  display: flex;
   align-items: center;
-  position: relative;
-  overflow: hidden;
-  padding: 40px;
+  justify-content: center;
 }
 
-.canvas-area::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image: radial-gradient(var(--text-main) 1px, transparent 1px);
-  background-size: 32px 32px;
-  opacity: 0.05;
-  pointer-events: none;
-}
-
-.canvas-viewport {
-  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  transform-origin: center center;
-  display: flex;
-}
-
-.right-panel-wrapper {
-  width: 380px;
-  background: var(--glass-bg);
-  backdrop-filter: blur(20px);
-  border-left: 1px solid var(--glass-border);
+.add-inner {
+  width: 100%;
+  height: 200px;
+  border: 2px dashed var(--glass-border);
+  border-radius: 20px;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.add-inner:hover {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+  background: rgba(var(--accent-color-rgb), 0.05);
+}
+
+/* 3. Properties */
+.right-panel-wrapper {
+  width: 360px;
+  height: 100%;
+  border-left: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  z-index: 10;
+}
+
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--glass-border);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
 }
 </style>

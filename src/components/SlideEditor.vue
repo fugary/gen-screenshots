@@ -1,0 +1,138 @@
+<template>
+  <div 
+    class="slide-editor" 
+    :class="{ active: store.activeSlideIndex === index }"
+    @click="store.activeSlideIndex = index"
+  >
+    <div class="editor-header">
+      <div class="page-badge">PAGE {{ index + 1 }}</div>
+      <div class="slide-name">{{ slide.name || 'Untitled' }}</div>
+      <el-button 
+        link 
+        type="danger" 
+        size="small" 
+        class="delete-btn"
+        @click.stop="store.deleteSlide(index)"
+        v-if="store.slides.length > 1"
+      >
+        <el-icon><Delete /></el-icon>
+      </el-button>
+    </div>
+
+    <div class="canvas-container">
+      <div class="canvas-wrapper" :style="wrapperStyle">
+        <ScreenshotCanvas v-if="isActive || isVisible" :slide-id="slide.id" :index="index" />
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { computed } from 'vue';
+import { useScreenshotStore } from '../store/screenshot';
+import { Delete } from '@element-plus/icons-vue';
+import ScreenshotCanvas from './ScreenshotCanvas.vue';
+
+const props = defineProps<{
+  slide: any;
+  index: number;
+}>();
+
+const store = useScreenshotStore();
+
+const isActive = computed(() => store.activeSlideIndex === props.index);
+const isVisible = ref(true); // For now, keep visible for simplicity
+
+const wrapperStyle = computed(() => ({
+  transform: `scale(0.35)`, // High-quality preview scale
+  transformOrigin: 'top left'
+}));
+
+</script>
+
+<style scoped>
+.slide-editor {
+  flex: 0 0 auto;
+  width: 450px; /* Base width for the editor card */
+  height: 100%;
+  padding: 16px;
+  background: var(--glass-bg);
+  border: 2px solid transparent;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.slide-editor:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(var(--accent-color-rgb), 0.2);
+}
+
+.slide-editor.active {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--accent-color);
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.3);
+}
+
+.editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 10;
+}
+
+.page-badge {
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  color: var(--accent-color);
+  background: rgba(var(--accent-color-rgb), 0.1);
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.slide-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+.canvas-container {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  background: rgba(0,0,0,0.1);
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+}
+
+/* 
+   We need the inner canvas to be full resolution 1242x2688 
+   but scaled down to fit the 450px container.
+   1242 * 0.35 = 434px. 
+*/
+.canvas-wrapper {
+  width: 1242px;
+  height: 2688px;
+}
+
+.delete-btn {
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.slide-editor:hover .delete-btn {
+  opacity: 1;
+}
+</style>
