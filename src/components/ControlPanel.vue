@@ -144,6 +144,23 @@
 
             <div class="settings-group">
               <div class="group-header">
+                <el-icon><Monitor /></el-icon>
+                <span>Device Frame</span>
+              </div>
+              <div class="prop-item">
+                <el-select v-model="store.activeSlide.frameStyle" size="small" class="glass-select">
+                  <el-option label="iPhone 16 Pro Max" value="iphone16-promax" />
+                  <el-option label="iPhone 15 (6.7 inch)" value="iphone-6.7" />
+                  <el-option label="iPhone 15 (6.5 inch)" value="iphone-6.5" />
+                  <el-option label="iPhone 8 Plus (5.5 inch)" value="iphone-5.5" />
+                  <el-option label="iPad Pro 13 inch" value="ipad-13" />
+                  <el-option label="iPad Pro 11 inch" value="ipad-11" />
+                </el-select>
+              </div>
+            </div>
+
+            <div class="settings-group">
+              <div class="group-header">
                 <el-icon><Grid /></el-icon>
                 <span>Layout Presets</span>
               </div>
@@ -159,6 +176,15 @@
                 <div class="mini-preset" @click="store.applyLayoutPreset('center-hero')">
                   <div class="icon hero"></div>
                   <span>Hero</span>
+                </div>
+                <!-- Panorama -->
+                <div class="mini-preset panorama" @click="store.applyLayoutPreset('panorama-start')">
+                  <div class="icon pan-start"></div>
+                  <span>Pan Start</span>
+                </div>
+                <div class="mini-preset panorama" @click="store.applyLayoutPreset('panorama-end')">
+                  <div class="icon pan-end"></div>
+                  <span>Pan End</span>
                 </div>
               </div>
             </div>
@@ -476,6 +502,8 @@ const handleLayerUpload = (file: UploadFile) => {
 .icon.duo { clip-path: polygon(0 0, 40% 0, 40% 100%, 0 100%, 60% 0, 100% 0, 100% 100%, 60% 100%); }
 .icon.trio { clip-path: polygon(0 0, 25% 0, 25% 100%, 0 100%, 40% 0, 60% 0, 60% 100%, 40% 100%, 75% 0, 100% 0, 100% 100%, 75% 100%); }
 .icon.hero { width: 12px; }
+.icon.pan-start { clip-path: polygon(70% 0, 100% 0, 100% 100%, 70% 100%); }
+.icon.pan-end { clip-path: polygon(0 0, 30% 0, 30% 100%, 0 100%); }
 
 .gradient-pickers {
   display: flex;

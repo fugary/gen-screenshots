@@ -2,6 +2,7 @@
   <div 
     class="slide-editor" 
     :class="{ active: store.activeSlideIndex === index }"
+    :style="{ width: `${editorWidth}px` }"
     @click="store.activeSlideIndex = index"
   >
     <div class="editor-header">
@@ -39,22 +40,42 @@ const props = defineProps<{
 }>();
 
 const store = useScreenshotStore();
-
+const currentSlide = computed(() => props.slide);
 const isActive = computed(() => store.activeSlideIndex === props.index);
-const isVisible = ref(true); // For now, keep visible for simplicity
 
-const wrapperStyle = computed(() => ({
-  transform: `scale(0.35)`, // High-quality preview scale
-  transformOrigin: 'top left'
-}));
+const aspectRatio = computed(() => {
+  const frame = currentSlide.value?.frameStyle || 'iphone-6.7';
+  if (frame.includes('ipad')) return 0.75; // 3:4
+  if (frame.includes('iphone-5.5')) return 0.5625; // 9:16
+  return 0.46; // 9:19.5 approx
+});
 
+const editorWidth = computed(() => {
+  const height = 700; // Standardize height
+  return height * aspectRatio.value + 32; // + padding
+});
+
+const wrapperStyle = computed(() => {
+  const frame = currentSlide.value?.frameStyle || 'iphone-6.7';
+  let w = 1290, h = 2796;
+  if (frame.includes('ipad')) { w = 2048; h = 2732; }
+  else if (frame === 'iphone-6.5') { w = 1242; h = 2688; }
+  else if (frame === 'iphone-5.5') { w = 1242; h = 2208; }
+  
+  const scale = 600 / h; // Fit to 600px height
+  return {
+    width: `${w}px`,
+    height: `${h}px`,
+    transform: `scale(${scale})`,
+    transformOrigin: 'top left'
+  };
+});
 </script>
 
 <style scoped>
 .slide-editor {
   flex: 0 0 auto;
-  width: 450px; /* Base width for the editor card */
-  height: 100%;
+  height: 800px; /* Fixed height for the strip */
   padding: 16px;
   background: var(--glass-bg);
   border: 2px solid transparent;
@@ -117,14 +138,8 @@ const wrapperStyle = computed(() => ({
   position: relative;
 }
 
-/* 
-   We need the inner canvas to be full resolution 1242x2688 
-   but scaled down to fit the 450px container.
-   1242 * 0.35 = 434px. 
-*/
 .canvas-wrapper {
-  width: 1242px;
-  height: 2688px;
+  /* Dynamic values from wrapperStyle */
 }
 
 .delete-btn {

@@ -165,12 +165,72 @@ onMounted(() => {
   if (canvasRef.value) {
     ctxRef.value = canvasRef.value.getContext('2d');
     frameFunc();
+    
+    // Mouse Interaction
+    canvasRef.value.addEventListener('mousedown', handleMouseDown);
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
   }
 });
 
 onUnmounted(() => {
   cancelAnimationFrame(animId);
+  if (canvasRef.value) {
+    canvasRef.value.removeEventListener('mousedown', handleMouseDown);
+  }
+  window.removeEventListener('mousemove', handleMouseMove);
+  window.removeEventListener('mouseup', handleMouseUp);
 });
+
+const isDragging = ref(false);
+const dragLayerId = ref<string | null>(null);
+const lastMousePos = ref({ x: 0, y: 0 });
+
+function handleMouseDown(e: MouseEvent) {
+  if (!canvasRef.value || !currentSlide.value) return;
+  const rect = canvasRef.value.getBoundingClientRect();
+  const mouseX = ((e.clientX - rect.left) / rect.width) * 100;
+  const mouseY = ((e.clientY - rect.top) / rect.height) * 100;
+
+  // Find topmost layer closest to mouse
+  const layers = [...currentSlide.value.layers].reverse();
+  for (const layer of layers) {
+    const dist = Math.sqrt(Math.pow(layer.x - mouseX, 2) + Math.pow(layer.y - mouseY, 2));
+    if (dist < 15) { // Radius of sensitivity
+      isDragging.value = true;
+      dragLayerId.value = layer.id;
+      // Also update store's active slide/layer if needed
+      store.activeSlideIndex = props.index ?? store.activeSlideIndex;
+      lastMousePos.value = { x: mouseX, y: mouseY };
+      return;
+    }
+  }
+}
+
+function handleMouseMove(e: MouseEvent) {
+  if (!isDragging.value || !dragLayerId.value || !canvasRef.value) return;
+  const rect = canvasRef.value.getBoundingClientRect();
+  const mouseX = ((e.clientX - rect.left) / rect.width) * 100;
+  const mouseY = ((e.clientY - rect.top) / rect.height) * 100;
+
+  const dx = mouseX - lastMousePos.value.x;
+  const dy = mouseY - lastMousePos.value.y;
+
+  const layer = currentSlide.value.layers.find(l => l.id === dragLayerId.value);
+  if (layer) {
+    store.updateLayer(layer.id, {
+      x: Math.max(0, Math.min(100, layer.x + dx)),
+      y: Math.max(0, Math.min(100, layer.y + dy))
+    });
+  }
+
+  lastMousePos.value = { x: mouseX, y: mouseY };
+}
+
+function handleMouseUp() {
+  isDragging.value = false;
+  dragLayerId.value = null;
+}
 </script>
 
 <style scoped>

@@ -33,6 +33,7 @@ export interface Slide {
   noiseAmount: number;
   adaptiveText: boolean;
   layout: 'top' | 'bottom';
+  frameStyle: string; // Default frame for this slide
 }
 
 export interface ProjectState {
@@ -79,9 +80,10 @@ const createDefaultSlide = (id: string, name: string, defaultLocale: string = 'e
     glowColor: 'rgba(99, 102, 241, 0.4)',
     fontSize: 108,
     subtitleFontSize: 55,
-    noiseAmount: 0.04,
+    noiseAmount: 0.05,
     adaptiveText: true,
-    layout: 'top'
+    layout: 'top',
+    frameStyle: 'iphone-6.7'
   };
 };
 
@@ -173,29 +175,39 @@ export const useScreenshotStore = defineStore('screenshot', {
 
     // Layout Presets
     applyLayoutPreset(presetId: string) {
+      if (!this.activeSlide) return;
       const slide = this.activeSlide;
-      if (!slide) return;
       
       switch (presetId) {
         case 'tilted-duo':
-          if (slide.layers.length < 2) this.addLayer();
-          slide.layers[0] = { ...slide.layers[0], x: 35, y: 65, rotateZ: -12, scale: 0.9 };
-          slide.layers[1] = { ...slide.layers[1], x: 65, y: 55, rotateZ: 12, scale: 0.9 };
+          slide.layers = [
+            { id: crypto.randomUUID(), x: 30, y: 55, scale: 0.8, rotateZ: -15, userImage: slide.layers[0]?.userImage || null, frameStyle: slide.frameStyle || 'iphone-6.7', shadowBlur: 100, opacity: 1.0 },
+            { id: crypto.randomUUID(), x: 75, y: 55, scale: 0.8, rotateZ: -15, userImage: slide.layers[1]?.userImage || null, frameStyle: slide.frameStyle || 'iphone-6.7', shadowBlur: 100, opacity: 1.0 }
+          ];
           break;
         case 'stacked-trio':
-          while (slide.layers.length < 3) this.addLayer();
-          slide.layers[0] = { ...slide.layers[0], x: 50, y: 60, rotateZ: 0, scale: 1.0 };
-          slide.layers[1] = { ...slide.layers[1], x: 25, y: 65, rotateZ: -10, scale: 0.85 };
-          slide.layers[2] = { ...slide.layers[2], x: 75, y: 65, rotateZ: 10, scale: 0.85 };
-          break;
-        case 'offset-right':
-          slide.layers[0] = { ...slide.layers[0], x: 70, y: 60, rotateZ: -8, scale: 1.1 };
+          slide.layers = [
+            { id: crypto.randomUUID(), x: 20, y: 60, scale: 0.7, rotateZ: -10, userImage: slide.layers[0]?.userImage || null, frameStyle: slide.frameStyle || 'iphone-6.7', shadowBlur: 100, opacity: 1.0 },
+            { id: crypto.randomUUID(), x: 50, y: 55, scale: 0.8, rotateZ: 0, userImage: slide.layers[1]?.userImage || null, frameStyle: slide.frameStyle || 'iphone-6.7', shadowBlur: 100, opacity: 1.0 },
+            { id: crypto.randomUUID(), x: 80, y: 60, scale: 0.7, rotateZ: 10, userImage: slide.layers[2]?.userImage || null, frameStyle: slide.frameStyle || 'iphone-6.7', shadowBlur: 100, opacity: 1.0 }
+          ];
           break;
         case 'center-hero':
-          slide.layers[0] = { ...slide.layers[0], x: 50, y: 55, rotateZ: 0, scale: 1.1 };
+          slide.layers = [{ id: crypto.randomUUID(), x: 50, y: 55, scale: 0.9, rotateZ: 0, userImage: slide.layers[0]?.userImage || null, frameStyle: slide.frameStyle || 'iphone-6.7', shadowBlur: 100, opacity: 1.0 }];
+          break;
+        case 'panorama-start':
+          // Device peaks from the right edge
+          slide.layers = [{ id: crypto.randomUUID(), x: 100, y: 55, scale: 1.0, rotateZ: 0, userImage: slide.layers[0]?.userImage || null, frameStyle: slide.frameStyle || 'iphone-6.7', shadowBlur: 100, opacity: 1.0 }];
+          break;
+        case 'panorama-end':
+          // Device peaks from the left edge
+          slide.layers = [{ id: crypto.randomUUID(), x: 0, y: 55, scale: 1.0, rotateZ: 0, userImage: slide.layers[0]?.userImage || null, frameStyle: slide.frameStyle || 'iphone-6.7', shadowBlur: 100, opacity: 1.0 }];
+          break;
+        case 'offset-right':
+          slide.layers = [{ id: crypto.randomUUID(), x: 70, y: 60, rotateZ: -8, scale: 1.1, userImage: slide.layers[0]?.userImage || null, frameStyle: slide.frameStyle || 'iphone-6.7', shadowBlur: 100, opacity: 1.0 }];
           break;
         case 'feature-left':
-          slide.layers[0] = { ...slide.layers[0], x: 30, y: 60, rotateZ: 5, scale: 0.9 };
+          slide.layers = [{ id: crypto.randomUUID(), x: 30, y: 60, rotateZ: 5, scale: 0.9, userImage: slide.layers[0]?.userImage || null, frameStyle: slide.frameStyle || 'iphone-6.7', shadowBlur: 100, opacity: 1.0 }];
           break;
       }
     },
