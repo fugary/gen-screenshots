@@ -85,7 +85,8 @@ const draw = async (overrideStyle?: string) => {
   }
 };
 
-const drawLayers = async (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, hasBgImg: boolean, overrideStyle?: string) => {
+async function drawLayers(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, hasBgImg: boolean, overrideStyle?: string) {
+  if (!store.activeSlide || !store.activeSlide.layers) return;
   // 1. Draw Background & Noise
   if (!hasBgImg) {
     if (store.bgType === 'linear') {
@@ -129,9 +130,9 @@ const drawLayers = async (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasEleme
 
   // 4. Draw Typography (Top Level Overlay)
   await drawTypography(ctx, canvas, textColor);
-};
+}
 
-const drawTypography = async (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, textColor: string) => {
+async function drawTypography(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, textColor: string) {
   ctx.save();
   ctx.fillStyle = textColor;
   ctx.textAlign = "center";
@@ -165,9 +166,9 @@ const drawTypography = async (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasE
     ctx.fillText(line, canvas.width / 2, textY + (titleLines.length * lineHeightTitle / 2) + gapBetweenTitleSubtitle + (i * lineHeightSub));
   });
   ctx.restore();
-};
+}
 
-const drawDeviceLayer = async (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, layer: any, textColor: string, overrideStyle?: string) => {
+async function drawDeviceLayer(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, layer: any, textColor: string, overrideStyle?: string) {
   const frameStyle = overrideStyle || layer.frameStyle;
   if (frameStyle === 'none') return;
 
@@ -236,7 +237,7 @@ const drawDeviceLayer = async (ctx: CanvasRenderingContext2D, canvas: HTMLCanvas
   }
 
   ctx.restore();
-};
+}
 
 const drawDeviceBorderSingle = (ctx: CanvasRenderingContext2D, x: number, y: number, frameW: number, frameH: number, borderRadius: number, isIPad: boolean, is55: boolean, frameStyle: string) => {
   ctx.save();

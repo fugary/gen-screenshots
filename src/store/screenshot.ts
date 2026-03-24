@@ -100,20 +100,28 @@ export const useScreenshotStore = defineStore('screenshot', {
     savedProjects: [] as { id: string; name: string; state: any }[]
   }),
   getters: {
-    activeSlide: (state) => state.slides[state.activeSlideIndex] || state.slides[0],
+    activeSlide: (state) => {
+      return state.slides[state.activeSlideIndex] || state.slides[0] || null;
+    },
     
     title: (state) => {
       const slide = state.slides[state.activeSlideIndex];
-      return slide?.locales[slide.activeLocale]?.title || '';
+      return slide?.locales?.[slide.activeLocale]?.title || '';
     },
     subtitle: (state) => {
       const slide = state.slides[state.activeSlideIndex];
-      return slide?.locales[slide.activeLocale]?.subtitle || '';
+      return slide?.locales?.[slide.activeLocale]?.subtitle || '';
     },
 
     // First layer properties for easy access (legacy components)
-    userImage: (state) => state.slides[state.activeSlideIndex]?.layers[0]?.userImage || null,
-    frameStyle: (state) => state.slides[state.activeSlideIndex]?.layers[0]?.frameStyle || 'iphone-6.7',
+    userImage: (state) => {
+      const slide = state.slides[state.activeSlideIndex];
+      return slide?.layers?.[0]?.userImage || null;
+    },
+    frameStyle: (state) => {
+      const slide = state.slides[state.activeSlideIndex];
+      return slide?.layers?.[0]?.frameStyle || 'iphone-6.7';
+    },
     
     bgType: (state) => state.slides[state.activeSlideIndex]?.bgType || 'linear',
     bgColor1: (state) => state.slides[state.activeSlideIndex]?.bgColor1 || '#1e293b',

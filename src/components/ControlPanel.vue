@@ -1,5 +1,5 @@
 <template>
-  <el-scrollbar class="control-panel">
+  <el-scrollbar class="control-panel" v-if="store.activeSlide">
     <!-- Main Properties (Formerly Canvas Tab) -->
     <div class="panel-content">
       <!-- Typography Section -->
@@ -7,7 +7,7 @@
         <h3 class="section-title">
           {{ $t('controls.headline') }}
         </h3>
-        <div class="locale-switcher-row" v-if="store.activeSlide && store.activeSlide.locales">
+        <div class="locale-switcher-row" v-if="store.activeSlide">
           <span class="sub-label">{{ $t('controls.contentLanguage') }}</span>
           <el-radio-group v-model="store.activeSlide.activeLocale" size="small">
             <el-radio-button 
@@ -19,7 +19,7 @@
             </el-radio-button>
           </el-radio-group>
         </div>
-        <div class="text-inputs" v-if="store.activeSlide.locales[store.activeSlide.activeLocale]">
+        <div class="text-inputs" v-if="store.activeSlide?.locales && store.activeSlide.activeLocale && store.activeSlide.locales[store.activeSlide.activeLocale]">
           <el-input
             v-model="store.activeSlide.locales[store.activeSlide.activeLocale].title"
             type="textarea"
