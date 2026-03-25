@@ -65,6 +65,9 @@ const loadImage = (src: string): Promise<HTMLImageElement> => {
 };
 
 const frameCache = new Map<string, HTMLImageElement>();
+const userImageCache = new Map<string, HTMLImageElement>();
+const loadingUserImages = new Set<string>();
+
 const getFrameImage = async (style: string): Promise<HTMLImageElement | null> => {
   if (frameCache.has(style)) return frameCache.get(style)!;
   try {
@@ -89,16 +92,26 @@ async function drawDeviceLayer(ctx: CanvasRenderingContext2D, layer: any, slide:
   ctx.rotate((layer.rotateZ * Math.PI) / 180);
   ctx.scale(layer.scale, layer.scale);
 
-  // Screenshot
+  // Screenshot Rendering with Cache
   if (layer.userImage) {
-    try {
-      const userImg = await loadImage(layer.userImage);
+    let userImg = userImageCache.get(layer.userImage);
+    if (!userImg && !loadingUserImages.has(layer.userImage)) {
+      loadingUserImages.add(layer.userImage);
+      loadImage(layer.userImage).then(img => {
+        userImageCache.set(layer.userImage, img);
+        loadingUserImages.delete(layer.userImage);
+      }).catch(() => {
+        loadingUserImages.delete(layer.userImage);
+      });
+    }
+
+    if (userImg) {
       const padding = layer.frameStyle.includes('ipad') ? 60 : 40;
       ctx.drawImage(userImg, -frameImg.width/2 + padding, -frameImg.height/2 + padding, frameImg.width - padding*2, frameImg.height - padding*2);
-    } catch (e) {}
+    }
   }
 
-  // Frame
+  // Frame (Always on top for that glass/bezel effect)
   ctx.drawImage(frameImg, -frameImg.width/2, -frameImg.height/2, frameImg.width, frameImg.height);
   ctx.restore();
 }
@@ -156,8 +169,18 @@ async function render() {
 }
 
 let animId: number;
-const frameFunc = () => {
-  render();
+let isRendering = false;
+
+const frameFunc = async () => {
+  if (!isRendering) {
+    isRendering = true;
+    try {
+      await render();
+    } catch (e) {
+      console.error('Render error:', e);
+    }
+    isRendering = false;
+  }
   animId = requestAnimationFrame(frameFunc);
 };
 

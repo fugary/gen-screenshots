@@ -64,7 +64,7 @@
               <div class="group-header">
                 <el-icon><Monitor /></el-icon>
                 <span>Layers</span>
-                <el-button circie size="small" @click="store.addLayer()">
+                <el-button circle size="small" @click="store.addLayer()">
                   <el-icon><Plus /></el-icon>
                 </el-button>
               </div>
@@ -148,7 +148,13 @@
                 <span>Device Frame</span>
               </div>
               <div class="prop-item">
-                <el-select v-model="store.activeSlide.frameStyle" size="small" class="glass-select">
+                <el-select 
+                  v-if="activeLayer"
+                  v-model="activeLayer.frameStyle" 
+                  size="small" 
+                  class="glass-select"
+                  @change="(val) => { if(store.activeSlide) store.activeSlide.frameStyle = val }"
+                >
                   <el-option label="iPhone 16 Pro Max" value="iphone16-promax" />
                   <el-option label="iPhone 15 (6.7 inch)" value="iphone-6.7" />
                   <el-option label="iPhone 15 (6.5 inch)" value="iphone-6.5" />
@@ -227,13 +233,20 @@ import {
 import { UploadFile } from 'element-plus';
 
 const store = useScreenshotStore();
-const activeTab = ref('design');
+const activeTab = ref('text');
 const activeLayerId = ref(store.activeSlide?.layers[0]?.id);
 
 // Sync activeLayerId when slide changes
 watch(() => store.activeSlideIndex, () => {
   activeLayerId.value = store.activeSlide?.layers[0]?.id;
-});
+}, { immediate: true });
+
+// Also sync if slides array itself changes (Applying template)
+watch(() => store.slides, () => {
+  if (!store.activeSlide?.layers.some(l => l.id === activeLayerId.value)) {
+    activeLayerId.value = store.activeSlide?.layers[0]?.id;
+  }
+}, { deep: true });
 
 const activeSlideLocale = computed({
   get: () => store.activeSlide?.locales[store.activeSlide?.activeLocale] || { title: '', subtitle: '' },
