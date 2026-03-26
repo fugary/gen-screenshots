@@ -5,6 +5,8 @@ export interface DeviceLayer {
   userImage: string | null;
   frameStyle: string;
   rotateZ: number; // Degrees
+  rotateX: number; // New: 3D X Tilt
+  rotateY: number; // New: 3D Y Tilt
   scale: number;   // 0.1 to 2.0
   x: number;       // Percent of canvas width (0-100)
   y: number;       // Percent of canvas height (0-100)
@@ -52,9 +54,11 @@ const createDefaultLayer = (id: string, image: string | null = null, style: stri
   userImage: image,
   frameStyle: style,
   rotateZ: 0,
-  scale: 1.0,
-  x: 50, // Center
-  y: 60, // Lower center to make room for text
+  rotateX: 0,
+  rotateY: 0,
+  scale: 0.9,
+  x: 50,
+  y: 60,
   shadowBlur: 100,
   opacity: 1.0
 });
@@ -181,33 +185,33 @@ export const useScreenshotStore = defineStore('screenshot', {
       switch (presetId) {
         case 'tilted-duo':
           slide.layers = [
-            { id: crypto.randomUUID(), x: 30, y: 55, scale: 0.8, rotateZ: -15, userImage: slide.layers[0]?.userImage || null, frameStyle: slide.frameStyle || 'iphone-6.7', shadowBlur: 100, opacity: 1.0 },
-            { id: crypto.randomUUID(), x: 75, y: 55, scale: 0.8, rotateZ: -15, userImage: slide.layers[1]?.userImage || null, frameStyle: slide.frameStyle || 'iphone-6.7', shadowBlur: 100, opacity: 1.0 }
+            { id: crypto.randomUUID(), x: 30, y: 55, scale: 0.8, rotateZ: -15, rotateX: 0, rotateY: 0, userImage: slide.layers[0]?.userImage || null, frameStyle: slide.frameStyle || 'iphone-6.7', shadowBlur: 100, opacity: 1.0 },
+            { id: crypto.randomUUID(), x: 75, y: 55, scale: 0.8, rotateZ: -15, rotateX: 0, rotateY: 0, userImage: slide.layers[1]?.userImage || null, frameStyle: slide.frameStyle || 'iphone-6.7', shadowBlur: 100, opacity: 1.0 }
           ];
           break;
         case 'stacked-trio':
           slide.layers = [
-            { id: crypto.randomUUID(), x: 20, y: 60, scale: 0.7, rotateZ: -10, userImage: slide.layers[0]?.userImage || null, frameStyle: slide.frameStyle || 'iphone-6.7', shadowBlur: 100, opacity: 1.0 },
-            { id: crypto.randomUUID(), x: 50, y: 55, scale: 0.8, rotateZ: 0, userImage: slide.layers[1]?.userImage || null, frameStyle: slide.frameStyle || 'iphone-6.7', shadowBlur: 100, opacity: 1.0 },
-            { id: crypto.randomUUID(), x: 80, y: 60, scale: 0.7, rotateZ: 10, userImage: slide.layers[2]?.userImage || null, frameStyle: slide.frameStyle || 'iphone-6.7', shadowBlur: 100, opacity: 1.0 }
+            { id: crypto.randomUUID(), x: 20, y: 60, scale: 0.7, rotateZ: -10, rotateX: 0, rotateY: 0, userImage: slide.layers[0]?.userImage || null, frameStyle: slide.frameStyle || 'iphone-6.7', shadowBlur: 100, opacity: 1.0 },
+            { id: crypto.randomUUID(), x: 50, y: 55, scale: 0.8, rotateZ: 0, rotateX: 0, rotateY: 0, userImage: slide.layers[1]?.userImage || null, frameStyle: slide.frameStyle || 'iphone-6.7', shadowBlur: 100, opacity: 1.0 },
+            { id: crypto.randomUUID(), x: 80, y: 60, scale: 0.7, rotateZ: 10, rotateX: 0, rotateY: 0, userImage: slide.layers[2]?.userImage || null, frameStyle: slide.frameStyle || 'iphone-6.7', shadowBlur: 100, opacity: 1.0 }
           ];
           break;
         case 'center-hero':
-          slide.layers = [{ id: crypto.randomUUID(), x: 50, y: 55, scale: 0.9, rotateZ: 0, userImage: slide.layers[0]?.userImage || null, frameStyle: slide.frameStyle || 'iphone-6.7', shadowBlur: 100, opacity: 1.0 }];
+          slide.layers = [{ id: crypto.randomUUID(), x: 50, y: 55, scale: 0.9, rotateZ: 0, rotateX: 0, rotateY: 0, userImage: slide.layers[0]?.userImage || null, frameStyle: slide.frameStyle || 'iphone-6.7', shadowBlur: 100, opacity: 1.0 }];
           break;
         case 'panorama-start':
           // Device peaks from the right edge
-          slide.layers = [{ id: crypto.randomUUID(), x: 100, y: 55, scale: 1.0, rotateZ: 0, userImage: slide.layers[0]?.userImage || null, frameStyle: slide.frameStyle || 'iphone-6.7', shadowBlur: 100, opacity: 1.0 }];
+          slide.layers = [{ id: crypto.randomUUID(), x: 100, y: 55, scale: 1.0, rotateZ: 0, rotateX: 0, rotateY: 0, userImage: slide.layers[0]?.userImage || null, frameStyle: slide.frameStyle || 'iphone-6.7', shadowBlur: 100, opacity: 1.0 }];
           break;
         case 'panorama-end':
           // Device peaks from the left edge
-          slide.layers = [{ id: crypto.randomUUID(), x: 0, y: 55, scale: 1.0, rotateZ: 0, userImage: slide.layers[0]?.userImage || null, frameStyle: slide.frameStyle || 'iphone-6.7', shadowBlur: 100, opacity: 1.0 }];
+          slide.layers = [{ id: crypto.randomUUID(), x: 0, y: 55, scale: 1.0, rotateZ: 0, rotateX: 0, rotateY: 0, userImage: slide.layers[0]?.userImage || null, frameStyle: slide.frameStyle || 'iphone-6.7', shadowBlur: 100, opacity: 1.0 }];
           break;
         case 'offset-right':
-          slide.layers = [{ id: crypto.randomUUID(), x: 70, y: 60, rotateZ: -8, scale: 1.1, userImage: slide.layers[0]?.userImage || null, frameStyle: slide.frameStyle || 'iphone-6.7', shadowBlur: 100, opacity: 1.0 }];
+          slide.layers = [{ id: crypto.randomUUID(), x: 70, y: 60, rotateZ: -8, rotateX: 0, rotateY: 0, scale: 1.1, userImage: slide.layers[0]?.userImage || null, frameStyle: slide.frameStyle || 'iphone-6.7', shadowBlur: 100, opacity: 1.0 }];
           break;
         case 'feature-left':
-          slide.layers = [{ id: crypto.randomUUID(), x: 30, y: 60, rotateZ: 5, scale: 0.9, userImage: slide.layers[0]?.userImage || null, frameStyle: slide.frameStyle || 'iphone-6.7', shadowBlur: 100, opacity: 1.0 }];
+          slide.layers = [{ id: crypto.randomUUID(), x: 30, y: 60, rotateZ: 5, rotateX: 0, rotateY: 0, scale: 0.9, userImage: slide.layers[0]?.userImage || null, frameStyle: slide.frameStyle || 'iphone-6.7', shadowBlur: 100, opacity: 1.0 }];
           break;
       }
     },

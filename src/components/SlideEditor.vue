@@ -39,20 +39,21 @@ const props = defineProps<{
   index: number;
 }>();
 
+
 const store = useScreenshotStore();
 const currentSlide = computed(() => props.slide);
 const isActive = computed(() => store.activeSlideIndex === props.index);
 
 const aspectRatio = computed(() => {
-  const frame = currentSlide.value?.frameStyle || 'iphone-6.7';
+  const frame = props.slide?.frameStyle || 'iphone-6.7';
   if (frame.includes('ipad')) return 0.75; // 3:4
   if (frame.includes('iphone-5.5')) return 0.5625; // 9:16
   return 0.46; // 9:19.5 approx
 });
 
 const editorWidth = computed(() => {
-  const height = 700; // Standardize height
-  return height * aspectRatio.value + 32; // + padding
+  const height = 700; // Standardized vertical height
+  return height * aspectRatio.value + 32; // + card padding
 });
 
 const wrapperStyle = computed(() => {

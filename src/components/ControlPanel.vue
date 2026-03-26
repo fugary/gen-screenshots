@@ -123,8 +123,16 @@
                 </div>
                 <div class="transform-stack">
                   <div class="t-row">
-                    <div class="t-label">Rotate <span>{{ activeLayer.rotateZ }}°</span></div>
+                    <div class="t-label">Rotate Z <span>{{ activeLayer.rotateZ }}°</span></div>
                     <el-slider v-model="activeLayer.rotateZ" :min="-180" :max="180" size="small" />
+                  </div>
+                  <div class="t-row">
+                    <div class="t-label">Tilt X <span>{{ activeLayer.rotateX }}°</span></div>
+                    <el-slider v-model="activeLayer.rotateX" :min="-45" :max="45" size="small" />
+                  </div>
+                  <div class="t-row">
+                    <div class="t-label">Tilt Y <span>{{ activeLayer.rotateY }}°</span></div>
+                    <el-slider v-model="activeLayer.rotateY" :min="-45" :max="45" size="small" />
                   </div>
                   <div class="t-row">
                     <div class="t-label">Scale <span>{{ activeLayer.scale }}x</span></div>
@@ -153,7 +161,7 @@
                   v-model="activeLayer.frameStyle" 
                   size="small" 
                   class="glass-select"
-                  @change="(val) => { if(store.activeSlide) store.activeSlide.frameStyle = val }"
+                  @change="handleFrameChange"
                 >
                   <el-option label="iPhone 16 Pro Max" value="iphone16-promax" />
                   <el-option label="iPhone 15 (6.7 inch)" value="iphone-6.7" />
@@ -265,6 +273,15 @@ const handleLayerUpload = (file: UploadFile) => {
     }
   };
   reader.readAsDataURL(file.raw!);
+};
+
+const handleFrameChange = (val: string) => {
+  if (activeLayer.value) {
+    activeLayer.value.frameStyle = val;
+  }
+  if (store.activeSlide) {
+    store.activeSlide.frameStyle = val;
+  }
 };
 </script>
 

@@ -64,20 +64,55 @@ const loadImage = (src: string): Promise<HTMLImageElement> => {
   });
 };
 
-const frameCache = new Map<string, HTMLImageElement>();
+// Generate a realistic device frame using SVG to ensure no missing assets
+function getFrameSVG(id: string) {
+  let width = 1290, height = 2796;
+  let cornerRadius = 240;
+  let bezel = 60;
+  let isIPad = id.includes('ipad');
+
+  if (isIPad) {
+    width = 2048; height = 2732;
+    cornerRadius = 100;
+    bezel = 80;
+  } else if (id.includes('iphone-5.5')) {
+    width = 1242; height = 2208;
+    cornerRadius = 200;
+  }
+
+  const svg = `
+    <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="bezelGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#333;stop-opacity:1" />
+          <stop offset="50%" style="stop-color:#111;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#333;stop-opacity:1" />
+        </linearGradient>
+      </defs>
+      <!-- Outer Bezel -->
+      <rect x="0" y="0" width="${width}" height="${height}" rx="${cornerRadius}" fill="url(#bezelGrad)" stroke="#444" stroke-width="6"/>
+      <!-- Inner Screen Area (Transparent to let screenshot show behind if we use this as overlay, or black if we draw it as base) -->
+      <rect x="${bezel}" y="${bezel}" width="${width - bezel*2}" height="${height - bezel*2}" rx="${cornerRadius - bezel}" fill="#000" />
+      <!-- Dynamic Island / Sensors -->
+      ${isIPad ? '' : `<rect x="${width/2 - 150}" y="100" width="300" height="80" rx="40" fill="#000" stroke="#222" stroke-width="2"/>`}
+    </svg>
+  `;
+  return 'data:image/svg+xml;base64,' + btoa(svg.trim());
+}
+
+const frameImageCache = new Map<string, HTMLImageElement>();
 const userImageCache = new Map<string, HTMLImageElement>();
 const loadingUserImages = new Set<string>();
 
-const getFrameImage = async (style: string): Promise<HTMLImageElement | null> => {
-  if (frameCache.has(style)) return frameCache.get(style)!;
-  try {
-    const img = await loadImage(`/frames/${style}.png`);
-    frameCache.set(style, img);
-    return img;
-  } catch (e) {
-    return null;
-  }
-};
+async function getFrameImage(id: string) {
+  if (frameImageCache.has(id)) return frameImageCache.get(id);
+  if (id === 'none') return null;
+  
+  const src = getFrameSVG(id);
+  const img = await loadImage(src);
+  frameImageCache.set(id, img);
+  return img;
+}
 
 async function drawDeviceLayer(ctx: CanvasRenderingContext2D, layer: any, slide: any) {
   if (!layer || layer.frameStyle === 'none') return;
@@ -89,29 +124,55 @@ async function drawDeviceLayer(ctx: CanvasRenderingContext2D, layer: any, slide:
   const centerY = (layer.y / 100) * canvasHeight.value;
   
   ctx.translate(centerX, centerY);
-  ctx.rotate((layer.rotateZ * Math.PI) / 180);
-  ctx.scale(layer.scale, layer.scale);
+  
+  // Apply 3D-like Perspective Simulation
+  const radX = (layer.rotateX || 0) * (Math.PI / 180);
+  const radY = (layer.rotateY || 0) * (Math.PI / 180);
+  const radZ = (layer.rotateZ || 0) * (Math.PI / 180);
 
-  // Screenshot Rendering with Cache
+  // Combine transforms
+  ctx.rotate(radZ);
+  // Simulating 3D tilt using skew and non-uniform scale
+  ctx.transform(1, Math.tan(radX), Math.tan(radY), 1, 0, 0);
+  ctx.scale(layer.scale * Math.cos(radY), layer.scale * Math.cos(radX));
+
+  // Shadow
+  ctx.shadowColor = 'rgba(0,0,0,0.5)';
+  ctx.shadowBlur = layer.shadowBlur || 100;
+  ctx.shadowOffsetY = 40;
+
+  // Screenshot Rendering
   if (layer.userImage) {
     let userImg = userImageCache.get(layer.userImage);
-    if (!userImg && !loadingUserImages.has(layer.userImage)) {
-      loadingUserImages.add(layer.userImage);
-      loadImage(layer.userImage).then(img => {
-        userImageCache.set(layer.userImage, img);
-        loadingUserImages.delete(layer.userImage);
-      }).catch(() => {
-        loadingUserImages.delete(layer.userImage);
-      });
-    }
-
+    const padding = layer.frameStyle.includes('ipad') ? 60 : 40;
+    
     if (userImg) {
-      const padding = layer.frameStyle.includes('ipad') ? 60 : 40;
       ctx.drawImage(userImg, -frameImg.width/2 + padding, -frameImg.height/2 + padding, frameImg.width - padding*2, frameImg.height - padding*2);
+    } else {
+      // Placeholder while loading
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+      ctx.fillRect(-frameImg.width/2 + padding, -frameImg.height/2 + padding, frameImg.width - padding*2, frameImg.height - padding*2);
+      
+      if (!loadingUserImages.has(layer.userImage)) {
+        loadingUserImages.add(layer.userImage);
+        loadImage(layer.userImage).then(img => {
+          userImageCache.set(layer.userImage, img);
+          loadingUserImages.delete(layer.userImage);
+        }).catch(() => {
+          loadingUserImages.delete(layer.userImage);
+          // Optional: Mark as error in a separate set if needed
+        });
+      }
+
+      ctx.font = 'bold 30px Inter, sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,0.4)';
+      ctx.textAlign = 'center';
+      ctx.fillText('Loading Screenshot...', 0, 0);
     }
   }
 
-  // Frame (Always on top for that glass/bezel effect)
+  // Frame (Always on top)
+  ctx.shadowBlur = 0; // Don't shadow the frame itself separately
   ctx.drawImage(frameImg, -frameImg.width/2, -frameImg.height/2, frameImg.width, frameImg.height);
   ctx.restore();
 }
