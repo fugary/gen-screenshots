@@ -41,7 +41,6 @@ const props = defineProps<{
 
 
 const store = useScreenshotStore();
-const currentSlide = computed(() => props.slide);
 
 const aspectRatio = computed(() => {
   const frame = props.slide?.frameStyle || 'iphone-6.7';
@@ -56,18 +55,12 @@ const editorWidth = computed(() => {
 });
 
 const wrapperStyle = computed(() => {
-  const frame = currentSlide.value?.frameStyle || 'iphone-6.7';
-  let w = 1290, h = 2796;
-  if (frame.includes('ipad')) { w = 2048; h = 2732; }
-  else if (frame === 'iphone-6.5') { w = 1242; h = 2688; }
-  else if (frame === 'iphone-5.5') { w = 1242; h = 2208; }
-  
-  const scale = 600 / h; // Fit to 600px height
   return {
-    width: `${w}px`,
-    height: `${h}px`,
-    transform: `scale(${scale})`,
-    transformOrigin: 'top left'
+    width: '100%',
+    height: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
   };
 });
 </script>

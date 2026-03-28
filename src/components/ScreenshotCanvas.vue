@@ -138,29 +138,52 @@ async function drawDeviceLayer(ctx: CanvasRenderingContext2D, layer: any) {
   ctx.transform(1, Math.tan(radX), Math.tan(radY), 1, 0, 0);
   ctx.scale(layer.scale * Math.cos(radY), layer.scale * Math.cos(radX));
 
-  // Shadow
+  // Rendering Pipeline: Shadow Base -> Clipped Screen -> Overlay Bezel
+  const isIPad = layer.frameStyle.includes('ipad');
+  const bezel = isIPad ? 80 : 60;
+  const cornerRadius = isIPad ? 100 : (layer.frameStyle.includes('iphone-5.5') ? 200 : 240);
+  const innerRadius = Math.max(0, cornerRadius - bezel);
+
+  const hw = frameImg.width / 2;
+  const hh = frameImg.height / 2;
+  const screenW = frameImg.width - bezel * 2;
+  const screenH = frameImg.height - bezel * 2;
+  const screenX = -hw + bezel;
+  const screenY = -hh + bezel;
+
+  // ==== 0. Draw Shadow Base Plate ====
   ctx.shadowColor = 'rgba(0,0,0,0.5)';
   ctx.shadowBlur = layer.shadowBlur || 100;
   ctx.shadowOffsetY = 40;
+  ctx.fillStyle = '#000'; 
+  
+  ctx.beginPath();
+  if (ctx.roundRect) {
+    ctx.roundRect(-hw, -hh, frameImg.width, frameImg.height, cornerRadius);
+  } else {
+    ctx.rect(-hw, -hh, frameImg.width, frameImg.height);
+  }
+  ctx.fill();
 
-  // Rendering Pipeline: Screenshot first, Frame last (as overlay)
-  const isIPad = layer.frameStyle.includes('ipad');
-  const bezel = isIPad ? 80 : 60;
-  const screenW = frameImg.width - bezel * 2;
-  const screenH = frameImg.height - bezel * 2;
+  // Reset shadow for everything drawn on top
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetY = 0;
+  ctx.shadowColor = 'transparent';
 
-  // 1. Base Layer (Checkerboard or Solid Black)
-  const screenX = -frameImg.width/2 + bezel;
-  const screenY = -frameImg.height/2 + bezel;
+  // ==== 1. Base Layer & Screen (Clipped) ====
+  ctx.save();
+  ctx.beginPath();
+  if (ctx.roundRect) {
+    ctx.roundRect(screenX, screenY, screenW, screenH, innerRadius);
+  } else {
+    ctx.rect(screenX, screenY, screenW, screenH);
+  }
+  ctx.clip();
 
   if (layer.userImage) {
     ctx.fillStyle = '#000';
     ctx.fillRect(screenX, screenY, screenW, screenH);
   } else {
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(screenX, screenY, screenW, screenH);
-    ctx.clip();
     const bgSize = 40;
     for (let i = 0; i < screenW; i += bgSize) {
       for (let j = 0; j < screenH; j += bgSize) {
@@ -168,8 +191,6 @@ async function drawDeviceLayer(ctx: CanvasRenderingContext2D, layer: any) {
         ctx.fillRect(screenX + i, screenY + j, bgSize, bgSize);
       }
     }
-    ctx.restore();
-
     ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
     ctx.font = '600 48px Inter, sans-serif';
     ctx.textAlign = 'center';
@@ -177,7 +198,7 @@ async function drawDeviceLayer(ctx: CanvasRenderingContext2D, layer: any) {
     ctx.fillText('Select Layer to Upload', 0, 0);
   }
 
-  // 2. Draw User Screenshot (if exists)
+  // ==== 2. Draw User Screenshot ====
   if (layer.userImage) {
     const userImg = userImageCache.get(layer.userImage);
     if (userImg) {
@@ -191,10 +212,12 @@ async function drawDeviceLayer(ctx: CanvasRenderingContext2D, layer: any) {
     }
   }
 
-  // 3. Draw the Frame Overlay (Bezel + Notch/Island)
-  ctx.shadowBlur = 0; 
-  ctx.drawImage(frameImg, -frameImg.width/2, -frameImg.height/2, frameImg.width, frameImg.height);
-  ctx.restore();
+  ctx.restore(); // Undo inner screen clip
+
+  // ==== 3. Draw the Frame Overlay ====
+  ctx.drawImage(frameImg, -hw, -hh, frameImg.width, frameImg.height);
+  
+  ctx.restore(); // Restore global context transform
 }
 
 async function render() {
