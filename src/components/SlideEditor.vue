@@ -22,7 +22,7 @@
 
     <div class="canvas-container">
       <div class="canvas-wrapper" :style="wrapperStyle">
-        <ScreenshotCanvas v-if="isActive || isVisible" :slide-id="slide.id" :index="index" />
+        <ScreenshotCanvas :slide-id="slide.id" :index="index" />
       </div>
     </div>
   </div>
@@ -42,7 +42,6 @@ const props = defineProps<{
 
 const store = useScreenshotStore();
 const currentSlide = computed(() => props.slide);
-const isActive = computed(() => store.activeSlideIndex === props.index);
 
 const aspectRatio = computed(() => {
   const frame = props.slide?.frameStyle || 'iphone-6.7';

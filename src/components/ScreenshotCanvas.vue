@@ -9,7 +9,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useScreenshotStore } from '../store/screenshot';
 
 const props = defineProps<{
@@ -84,17 +84,19 @@ function getFrameSVG(id: string) {
     <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <linearGradient id="bezelGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" style="stop-color:#333;stop-opacity:1" />
+          <stop offset="0%" style="stop-color:#444;stop-opacity:1" />
           <stop offset="50%" style="stop-color:#111;stop-opacity:1" />
           <stop offset="100%" style="stop-color:#333;stop-opacity:1" />
         </linearGradient>
       </defs>
       <!-- Outer Bezel -->
-      <rect x="0" y="0" width="${width}" height="${height}" rx="${cornerRadius}" fill="url(#bezelGrad)" stroke="#444" stroke-width="6"/>
-      <!-- Inner Screen Area (Transparent to let screenshot show behind if we use this as overlay, or black if we draw it as base) -->
-      <rect x="${bezel}" y="${bezel}" width="${width - bezel*2}" height="${height - bezel*2}" rx="${cornerRadius - bezel}" fill="#000" />
-      <!-- Dynamic Island / Sensors -->
-      ${isIPad ? '' : `<rect x="${width/2 - 150}" y="100" width="300" height="80" rx="40" fill="#000" stroke="#222" stroke-width="2"/>`}
+      <path d="M ${cornerRadius},0 H ${width - cornerRadius} A ${cornerRadius},${cornerRadius} 0 0 1 ${width},${cornerRadius} V ${height - cornerRadius} A ${cornerRadius},${cornerRadius} 0 0 1 ${width - cornerRadius},${height} H ${cornerRadius} A ${cornerRadius},${cornerRadius} 0 0 1 0,${height - cornerRadius} V ${cornerRadius} A ${cornerRadius},${cornerRadius} 0 0 1 ${cornerRadius},0 Z M ${bezel},${bezel + cornerRadius - bezel} V ${height - bezel - (cornerRadius - bezel)} A ${cornerRadius - bezel},${cornerRadius - bezel} 0 0 0 ${bezel + (cornerRadius - bezel)},${height - bezel} H ${width - bezel - (cornerRadius - bezel)} A ${cornerRadius - bezel},${cornerRadius - bezel} 0 0 0 ${width - bezel},${height - bezel - (cornerRadius - bezel)} V ${bezel + (cornerRadius - bezel)} A ${cornerRadius - bezel},${cornerRadius - bezel} 0 0 0 ${width - bezel - (cornerRadius - bezel)},${bezel} H ${bezel + (cornerRadius - bezel)} A ${cornerRadius - bezel},${cornerRadius - bezel} 0 0 0 ${bezel},${bezel + (cornerRadius - bezel)} Z" fill="url(#bezelGrad)" />
+      
+      <!-- Surface reflections / Highlights -->
+      <rect x="0" y="0" width="${width}" height="${height}" rx="${cornerRadius}" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="4"/>
+      
+      <!-- Dynamic Island (drawn on top) -->
+      ${isIPad ? '' : `<rect x="${width/2 - 150}" y="100" width="300" height="80" rx="40" fill="#000" stroke="#333" stroke-width="2"/>`}
     </svg>
   `;
   return 'data:image/svg+xml;base64,' + btoa(svg.trim());
@@ -114,7 +116,7 @@ async function getFrameImage(id: string) {
   return img;
 }
 
-async function drawDeviceLayer(ctx: CanvasRenderingContext2D, layer: any, slide: any) {
+async function drawDeviceLayer(ctx: CanvasRenderingContext2D, layer: any) {
   if (!layer || layer.frameStyle === 'none') return;
   const frameImg = await getFrameImage(layer.frameStyle);
   if (!frameImg) return;
@@ -141,38 +143,32 @@ async function drawDeviceLayer(ctx: CanvasRenderingContext2D, layer: any, slide:
   ctx.shadowBlur = layer.shadowBlur || 100;
   ctx.shadowOffsetY = 40;
 
-  // Screenshot Rendering
-  if (layer.userImage) {
-    let userImg = userImageCache.get(layer.userImage);
-    const padding = layer.frameStyle.includes('ipad') ? 60 : 40;
-    
-    if (userImg) {
-      ctx.drawImage(userImg, -frameImg.width/2 + padding, -frameImg.height/2 + padding, frameImg.width - padding*2, frameImg.height - padding*2);
-    } else {
-      // Placeholder while loading
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
-      ctx.fillRect(-frameImg.width/2 + padding, -frameImg.height/2 + padding, frameImg.width - padding*2, frameImg.height - padding*2);
-      
-      if (!loadingUserImages.has(layer.userImage)) {
-        loadingUserImages.add(layer.userImage);
-        loadImage(layer.userImage).then(img => {
-          userImageCache.set(layer.userImage, img);
-          loadingUserImages.delete(layer.userImage);
-        }).catch(() => {
-          loadingUserImages.delete(layer.userImage);
-          // Optional: Mark as error in a separate set if needed
-        });
-      }
+  // Rendering Pipeline: Screenshot first, Frame last (as overlay)
+  const isIPad = layer.frameStyle.includes('ipad');
+  const bezel = isIPad ? 80 : 60;
+  const screenW = frameImg.width - bezel * 2;
+  const screenH = frameImg.height - bezel * 2;
 
-      ctx.font = 'bold 30px Inter, sans-serif';
-      ctx.fillStyle = 'rgba(255,255,255,0.4)';
-      ctx.textAlign = 'center';
-      ctx.fillText('Loading Screenshot...', 0, 0);
+  // 1. Draw Black Base (for empty screen)
+  ctx.fillStyle = '#000';
+  ctx.fillRect(-frameImg.width/2 + bezel, -frameImg.height/2 + bezel, screenW, screenH);
+
+  // 2. Draw User Screenshot (if exists)
+  if (layer.userImage) {
+    const userImg = userImageCache.get(layer.userImage);
+    if (userImg) {
+      ctx.drawImage(userImg, -frameImg.width/2 + bezel, -frameImg.height/2 + bezel, screenW, screenH);
+    } else if (!loadingUserImages.has(layer.userImage)) {
+      loadingUserImages.add(layer.userImage);
+      loadImage(layer.userImage).then(img => {
+        userImageCache.set(layer.userImage, img);
+        loadingUserImages.delete(layer.userImage);
+      });
     }
   }
 
-  // Frame (Always on top)
-  ctx.shadowBlur = 0; // Don't shadow the frame itself separately
+  // 3. Draw the Frame Overlay (Bezel + Notch/Island)
+  ctx.shadowBlur = 0; 
   ctx.drawImage(frameImg, -frameImg.width/2, -frameImg.height/2, frameImg.width, frameImg.height);
   ctx.restore();
 }
@@ -224,7 +220,7 @@ async function render() {
   // Layers
   if (slide.layers) {
     for (const layer of slide.layers) {
-      await drawDeviceLayer(ctx, layer, slide);
+      await drawDeviceLayer(ctx, layer);
     }
   }
 }
