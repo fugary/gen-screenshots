@@ -56,9 +56,9 @@ const createDefaultLayer = (id: string, image: string | null = null, style: stri
   rotateZ: 0,
   rotateX: 0,
   rotateY: 0,
-  scale: 1.15,
+  scale: 0.85,
   x: 50,
-  y: 55,
+  y: 65,
   shadowBlur: 100,
   opacity: 1.0
 });
@@ -185,31 +185,31 @@ export const useScreenshotStore = defineStore('screenshot', {
       switch (presetId) {
         case 'tilted-duo':
           slide.layers = [
-            { id: crypto.randomUUID(), x: 30, y: 50, scale: 1.0, rotateZ: -12, rotateX: 0, rotateY: 0, userImage: slide.layers[0]?.userImage || null, frameStyle: slide.frameStyle || 'iphone-6.7', shadowBlur: 100, opacity: 1.0 },
-            { id: crypto.randomUUID(), x: 75, y: 45, scale: 1.0, rotateZ: -12, rotateX: 0, rotateY: 0, userImage: slide.layers[1]?.userImage || null, frameStyle: slide.frameStyle || 'iphone-6.7', shadowBlur: 120, opacity: 1.0 }
+            { id: crypto.randomUUID(), x: 30, y: 60, scale: 0.8, rotateZ: -12, rotateX: 0, rotateY: 0, userImage: slide.layers[0]?.userImage || null, frameStyle: slide.frameStyle || 'iphone-6.7', shadowBlur: 100, opacity: 1.0 },
+            { id: crypto.randomUUID(), x: 70, y: 55, scale: 0.85, rotateZ: 5, rotateX: 0, rotateY: 0, userImage: slide.layers[1]?.userImage || null, frameStyle: slide.frameStyle || 'iphone-6.7', shadowBlur: 120, opacity: 1.0 }
           ];
           break;
         case 'stacked-trio':
           slide.layers = [
-            { id: crypto.randomUUID(), x: 20, y: 55, scale: 0.9, rotateZ: -10, rotateX: 0, rotateY: 0, userImage: slide.layers[0]?.userImage || null, frameStyle: slide.frameStyle || 'iphone-6.7', shadowBlur: 100, opacity: 1.0 },
-            { id: crypto.randomUUID(), x: 50, y: 48, scale: 1.0, rotateZ: 0, rotateX: 0, rotateY: 0, userImage: slide.layers[1]?.userImage || null, frameStyle: slide.frameStyle || 'iphone-6.7', shadowBlur: 140, opacity: 1.0 },
-            { id: crypto.randomUUID(), x: 80, y: 55, scale: 0.9, rotateZ: 10, rotateX: 0, rotateY: 0, userImage: slide.layers[2]?.userImage || null, frameStyle: slide.frameStyle || 'iphone-6.7', shadowBlur: 100, opacity: 1.0 }
+            { id: crypto.randomUUID(), x: 20, y: 60, scale: 0.75, rotateZ: -10, rotateX: 0, rotateY: 0, userImage: slide.layers[0]?.userImage || null, frameStyle: slide.frameStyle || 'iphone-6.7', shadowBlur: 100, opacity: 1.0 },
+            { id: crypto.randomUUID(), x: 50, y: 55, scale: 0.85, rotateZ: 0, rotateX: 0, rotateY: 0, userImage: slide.layers[1]?.userImage || null, frameStyle: slide.frameStyle || 'iphone-6.7', shadowBlur: 140, opacity: 1.0 },
+            { id: crypto.randomUUID(), x: 80, y: 60, scale: 0.75, rotateZ: 10, rotateX: 0, rotateY: 0, userImage: slide.layers[2]?.userImage || null, frameStyle: slide.frameStyle || 'iphone-6.7', shadowBlur: 100, opacity: 1.0 }
           ];
           break;
         case 'center-hero':
-          slide.layers = [{ id: crypto.randomUUID(), x: 50, y: 50, scale: 1.25, rotateZ: 0, rotateX: 0, rotateY: 0, userImage: slide.layers[0]?.userImage || null, frameStyle: slide.frameStyle || 'iphone-6.7', shadowBlur: 150, opacity: 1.0 }];
+          slide.layers = [{ id: crypto.randomUUID(), x: 50, y: 60, scale: 0.95, rotateZ: 0, rotateX: 0, rotateY: 0, userImage: slide.layers[0]?.userImage || null, frameStyle: slide.frameStyle || 'iphone-6.7', shadowBlur: 150, opacity: 1.0 }];
           break;
         case 'panorama-start':
-          slide.layers = [{ id: crypto.randomUUID(), x: 100, y: 50, scale: 1.3, rotateZ: 0, rotateX: 0, rotateY: 0, userImage: slide.layers[0]?.userImage || null, frameStyle: slide.frameStyle || 'iphone-6.7', shadowBlur: 120, opacity: 1.0 }];
+          slide.layers = [{ id: crypto.randomUUID(), x: 90, y: 60, scale: 1.05, rotateZ: 0, rotateX: 0, rotateY: 0, userImage: slide.layers[0]?.userImage || null, frameStyle: slide.frameStyle || 'iphone-6.7', shadowBlur: 120, opacity: 1.0 }];
           break;
         case 'panorama-end':
-          slide.layers = [{ id: crypto.randomUUID(), x: 0, y: 50, scale: 1.3, rotateZ: 0, rotateX: 0, rotateY: 0, userImage: slide.layers[0]?.userImage || null, frameStyle: slide.frameStyle || 'iphone-6.7', shadowBlur: 120, opacity: 1.0 }];
+          slide.layers = [{ id: crypto.randomUUID(), x: 10, y: 60, scale: 1.05, rotateZ: 0, rotateX: 0, rotateY: 0, userImage: slide.layers[0]?.userImage || null, frameStyle: slide.frameStyle || 'iphone-6.7', shadowBlur: 120, opacity: 1.0 }];
           break;
         case 'offset-right':
-          slide.layers = [{ id: crypto.randomUUID(), x: 75, y: 50, rotateZ: -10, rotateX: 0, rotateY: 0, scale: 1.3, userImage: slide.layers[0]?.userImage || null, frameStyle: slide.frameStyle || 'iphone-6.7', shadowBlur: 150, opacity: 1.0 }];
+          slide.layers = [{ id: crypto.randomUUID(), x: 75, y: 60, rotateZ: -10, rotateX: 0, rotateY: 0, scale: 0.9, userImage: slide.layers[0]?.userImage || null, frameStyle: slide.frameStyle || 'iphone-6.7', shadowBlur: 150, opacity: 1.0 }];
           break;
         case 'feature-left':
-          slide.layers = [{ id: crypto.randomUUID(), x: 25, y: 50, rotateZ: 8, rotateX: 0, rotateY: 0, scale: 1.2, userImage: slide.layers[0]?.userImage || null, frameStyle: slide.frameStyle || 'iphone-6.7', shadowBlur: 120, opacity: 1.0 }];
+          slide.layers = [{ id: crypto.randomUUID(), x: 25, y: 60, rotateZ: 8, rotateX: 0, rotateY: 0, scale: 0.9, userImage: slide.layers[0]?.userImage || null, frameStyle: slide.frameStyle || 'iphone-6.7', shadowBlur: 120, opacity: 1.0 }];
           break;
       }
     },
@@ -222,37 +222,37 @@ export const useScreenshotStore = defineStore('screenshot', {
         // 1. Intro Center (Bolder)
         const s1 = createDefaultSlide(Date.now().toString() + '1', 'Intro', defaultLocale);
         s1.bgColor1 = '#0f172a'; s1.bgColor2 = '#020617';
-        s1.layers[0] = { ...s1.layers[0], x: 50, y: 48, rotateZ: 0, scale: 1.25 };
+        s1.layers[0] = { ...s1.layers[0], x: 50, y: 55, rotateZ: 0, scale: 0.95 };
         this.slides.push(s1);
 
         // 2. Feature Right (Zoomed)
         const s2 = createDefaultSlide(Date.now().toString() + '2', 'Features', defaultLocale);
         s2.bgColor1 = '#0f172a'; s2.bgColor2 = '#020617';
-        s2.layers[0] = { ...s2.layers[0], x: 85, y: 50, rotateZ: -8, scale: 1.4 };
+        s2.layers[0] = { ...s2.layers[0], x: 75, y: 60, rotateZ: -8, scale: 1.1 };
         this.slides.push(s2);
 
         // 3. Tilted Duo (Large)
         const s3 = createDefaultSlide(Date.now().toString() + '3', 'Comparison', defaultLocale);
         s3.bgColor1 = '#0f172a'; s3.bgColor2 = '#020617';
         s3.layers = [createDefaultLayer('l1'), createDefaultLayer('l2')];
-        s3.layers[0] = { ...s3.layers[0], x: 40, y: 55, rotateZ: -10, scale: 1.05 };
-        s3.layers[1] = { ...s3.layers[1], x: 80, y: 45, rotateZ: -10, scale: 1.05 };
+        s3.layers[0] = { ...s3.layers[0], x: 40, y: 60, rotateZ: -10, scale: 0.85 };
+        s3.layers[1] = { ...s3.layers[1], x: 80, y: 50, rotateZ: -10, scale: 0.85 };
         this.slides.push(s3);
 
         // 4. Stacked Trio (Premium Stacking)
         const s4 = createDefaultSlide(Date.now().toString() + '4', 'Gallery', defaultLocale);
         s4.bgColor1 = '#0f172a'; s4.bgColor2 = '#020617';
         s4.layers = [
-          { ...createDefaultLayer('l2'), x: 18, y: 58, rotateZ: -12, scale: 0.95 },
-          { ...createDefaultLayer('l3'), x: 82, y: 58, rotateZ: 12, scale: 0.95 },
-          { ...createDefaultLayer('l1'), x: 50, y: 50, rotateZ: 0, scale: 1.15 } // Hero on top
+          { ...createDefaultLayer('l2'), x: 20, y: 62, rotateZ: -12, scale: 0.8 },
+          { ...createDefaultLayer('l3'), x: 80, y: 62, rotateZ: 12, scale: 0.8 },
+          { ...createDefaultLayer('l1'), x: 50, y: 55, rotateZ: 0, scale: 0.95 } // Hero on top
         ];
         this.slides.push(s4);
 
         // 5. Outro Zoom (Massive)
         const s5 = createDefaultSlide(Date.now().toString() + '5', 'Download', defaultLocale);
         s5.bgColor1 = '#0f172a'; s5.bgColor2 = '#020617';
-        s5.layers[0] = { ...s5.layers[0], x: 50, y: 85, rotateZ: 0, scale: 1.8 };
+        s5.layers[0] = { ...s5.layers[0], x: 50, y: 75, rotateZ: 0, scale: 1.4 };
         this.slides.push(s5);
       }
       

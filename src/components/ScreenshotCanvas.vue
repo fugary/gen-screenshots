@@ -149,15 +149,39 @@ async function drawDeviceLayer(ctx: CanvasRenderingContext2D, layer: any) {
   const screenW = frameImg.width - bezel * 2;
   const screenH = frameImg.height - bezel * 2;
 
-  // 1. Draw Black Base (for empty screen)
-  ctx.fillStyle = '#000';
-  ctx.fillRect(-frameImg.width/2 + bezel, -frameImg.height/2 + bezel, screenW, screenH);
+  // 1. Base Layer (Checkerboard or Solid Black)
+  const screenX = -frameImg.width/2 + bezel;
+  const screenY = -frameImg.height/2 + bezel;
+
+  if (layer.userImage) {
+    ctx.fillStyle = '#000';
+    ctx.fillRect(screenX, screenY, screenW, screenH);
+  } else {
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(screenX, screenY, screenW, screenH);
+    ctx.clip();
+    const bgSize = 40;
+    for (let i = 0; i < screenW; i += bgSize) {
+      for (let j = 0; j < screenH; j += bgSize) {
+        ctx.fillStyle = ((i/bgSize + j/bgSize) % 2 === 0) ? '#1e293b' : '#0f172a';
+        ctx.fillRect(screenX + i, screenY + j, bgSize, bgSize);
+      }
+    }
+    ctx.restore();
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+    ctx.font = '600 48px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('Select Layer to Upload', 0, 0);
+  }
 
   // 2. Draw User Screenshot (if exists)
   if (layer.userImage) {
     const userImg = userImageCache.get(layer.userImage);
     if (userImg) {
-      ctx.drawImage(userImg, -frameImg.width/2 + bezel, -frameImg.height/2 + bezel, screenW, screenH);
+      ctx.drawImage(userImg, screenX, screenY, screenW, screenH);
     } else if (!loadingUserImages.has(layer.userImage)) {
       loadingUserImages.add(layer.userImage);
       loadImage(layer.userImage).then(img => {

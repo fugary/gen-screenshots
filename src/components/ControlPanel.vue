@@ -153,7 +153,7 @@
             <div class="settings-group">
               <div class="group-header">
                 <el-icon><Monitor /></el-icon>
-                <span>Device Frame</span>
+                <span>Device Frame Model</span>
               </div>
               <div class="prop-item">
                 <el-select 
@@ -161,7 +161,6 @@
                   v-model="activeLayer.frameStyle" 
                   size="small" 
                   class="glass-select"
-                  @change="handleFrameChange"
                 >
                   <el-option label="iPhone 16 Pro Max" value="iphone16-promax" />
                   <el-option label="iPhone 15 (6.7 inch)" value="iphone-6.7" />
@@ -210,6 +209,17 @@
               <div class="group-header">
                 <el-icon><Brush /></el-icon>
                 <span>Canvas Scene</span>
+              </div>
+              <div class="prop-item">
+                <label>Export Ratio (Canvas Size)</label>
+                <el-select v-model="store.activeSlide.frameStyle" size="small" class="glass-select">
+                  <el-option label="iPhone 16 Pro Max (1320x2868)" value="iphone16-promax" />
+                  <el-option label="iPhone 15 / 14 (1290x2796)" value="iphone-6.7" />
+                  <el-option label="iPhone 13 / 12 (1242x2688)" value="iphone-6.5" />
+                  <el-option label="iPhone 8 Plus (1242x2208)" value="iphone-5.5" />
+                  <el-option label="iPad Pro 13 inch" value="ipad-13" />
+                  <el-option label="iPad Pro 11 inch" value="ipad-11" />
+                </el-select>
               </div>
               <div class="prop-item">
                 <label>Gradient Colors</label>
@@ -273,15 +283,6 @@ const handleLayerUpload = (file: UploadFile) => {
     }
   };
   reader.readAsDataURL(file.raw!);
-};
-
-const handleFrameChange = (val: string) => {
-  if (activeLayer.value) {
-    activeLayer.value.frameStyle = val;
-  }
-  if (store.activeSlide) {
-    store.activeSlide.frameStyle = val;
-  }
 };
 </script>
 
